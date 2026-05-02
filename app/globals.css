@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+/* クラスベースのダークモード設定
+   html に .dark クラスがある場合に dark: ユーティリティを適用する */
+@custom-variant dark (&:is(.dark *));
+
+/* ライト/ダーク共通CSS変数 */
+:root {
+  color-scheme: light;
+  --scrollbar-track: #e5e7eb;
+  --scrollbar-thumb: #9ca3af;
+}
+
+html.dark {
+  color-scheme: dark;
+  --scrollbar-track: #1f2937;
+  --scrollbar-thumb: #4b5563;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* スクロールバー */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}

@@ -5,8 +5,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
-  Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -51,7 +49,6 @@ function fmtNum(v: number): string {
 
 // スタイル定数
 const CHART_MARGIN = { top: 16, right: 10, left: 10, bottom: 5 };
-const LEGEND_STYLE = { fontSize: '11px', color: '#9ca3af' };
 const AXIS_TICK = { fontSize: 11, fill: '#9ca3af' };
 const YAXIS_TICK = { fontSize: 10, fill: '#9ca3af' };
 const TOOLTIP_STYLE = {
@@ -90,6 +87,7 @@ export function BulletDamageChart({
           期待値: br.expectedDamage,
           pct,
           element: bullet?.element ?? '無',
+          fill: ELEMENT_COLORS[bullet?.element ?? '無'] ?? '#9ca3af',
         };
       }),
     [bulletStaticResults, bullets, totalDamage],
@@ -121,11 +119,7 @@ export function BulletDamageChart({
             labelStyle={{ color: '#d1d5db' }}
             itemStyle={{ color: '#d1d5db' }}
           />
-          <Bar dataKey="期待値" name="期待値ダメージ" radius={[3, 3, 0, 0]}>
-            {data.map((entry, i) => (
-              <Cell key={i} fill={ELEMENT_COLORS[entry.element] ?? '#9ca3af'} />
-            ))}
-          </Bar>
+          <Bar dataKey="期待値" name="期待値ダメージ" radius={[3, 3, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
       <div className="flex gap-2 mt-1 flex-wrap">
@@ -160,6 +154,7 @@ export function SimHitChart({ hitSequence }: SimChartProps) {
         name: `${hit.sequenceIndex + 1}`,
         ダメージ: hit.expectedDamage,
         bulletId: hit.bulletId,
+        fill: getBulletColor(hit.bulletId),
       })),
     [hitSequence],
   );
@@ -196,11 +191,7 @@ export function SimHitChart({ hitSequence }: SimChartProps) {
             labelStyle={{ color: '#d1d5db' }}
             itemStyle={{ color: '#d1d5db' }}
           />
-          <Bar dataKey="ダメージ" name="CRIダメージ" radius={[2, 2, 0, 0]}>
-            {data.map((entry, i) => (
-              <Cell key={i} fill={getBulletColor(entry.bulletId)} />
-            ))}
-          </Bar>
+          <Bar dataKey="ダメージ" name="CRIダメージ" radius={[2, 2, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
       <div className="flex gap-3 mt-1 flex-wrap">

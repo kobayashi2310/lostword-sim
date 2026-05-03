@@ -25,7 +25,9 @@ export default function ConfigSidebar({
 }: Props) {
   return (
     <div className="flex flex-1 h-full overflow-hidden">
-      <nav className={`${width} flex-none border-r border-gray-200 dark:border-gray-700 p-2 space-y-0.5 bg-white dark:bg-gray-800`}>
+      <nav
+        className={`${width} flex-none border-r border-gray-200 dark:border-gray-700 p-2 space-y-0.5 bg-white dark:bg-gray-800`}
+      >
         {CONFIG_SECTIONS.map((s) => (
           <button
             key={s.id}

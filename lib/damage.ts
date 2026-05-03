@@ -6,7 +6,11 @@ import type {
   EnemyStats,
   SelfStats,
 } from '@/types';
-import { calcTotalChargeMult, combinedCriAttackR1, combinedCriHitR1 } from '@/types';
+import {
+  calcTotalChargeMult,
+  combinedCriAttackR1,
+  combinedCriHitR1,
+} from '@/types';
 import {
   getAtkDefSpdMultiplier,
   getCritMultiplier,
@@ -20,13 +24,16 @@ import {
 
 export function getElementalMultiplier(
   advantage: ElementalAdvantage,
-  advantageBonus = 0,    // 有利属性ダメージアップ %
+  advantageBonus = 0, // 有利属性ダメージアップ %
   disadvantageBonus = 0, // 不利属性ダメージアップ %
 ): number {
   switch (advantage) {
-    case '有利': return 2.0 * (1 + advantageBonus / 100);
-    case '等倍': return 1.0;
-    case '不利': return 0.5 * (1 + disadvantageBonus / 100);
+    case '有利':
+      return 2.0 * (1 + advantageBonus / 100);
+    case '等倍':
+      return 1.0;
+    case '不利':
+      return 0.5 * (1 + disadvantageBonus / 100);
   }
 }
 
@@ -102,7 +109,13 @@ export function calcSingleHitDamage(
   isGirlReincarnation: boolean,
   advantage: ElementalAdvantage,
   isCrit: boolean,
-  damageBonus: DamageBonus = { elementBonus: {}, bulletKindBonus: {}, advantageBonus: 0, disadvantageBonus: 0, chargeEffects: [] },
+  damageBonus: DamageBonus = {
+    elementBonus: {},
+    bulletKindBonus: {},
+    advantageBonus: 0,
+    disadvantageBonus: 0,
+    chargeEffects: [],
+  },
 ): number {
   const attackPower = calcAttackPower(selfStats, buffs, bullet);
   const enemyDefense = calcEnemyDefense(enemyStats, buffs, bullet);
@@ -120,9 +133,10 @@ export function calcSingleHitDamage(
     ? getCritMultiplier(combinedCriAttackR1(buffs), buffs.selfCriAttackR2)
     : 1;
   // 属性・弾種ダメージアップ（加算方式）
-  const bonusMult = 1
-    + (damageBonus.elementBonus[bullet.element] ?? 0) / 100
-    + (damageBonus.bulletKindBonus[bullet.bulletKind] ?? 0) / 100;
+  const bonusMult =
+    1 +
+    (damageBonus.elementBonus[bullet.element] ?? 0) / 100 +
+    (damageBonus.bulletKindBonus[bullet.bulletKind] ?? 0) / 100;
   // 蓄力（加算合計後に乗算、floor内に含める）
   const chargeMult = 1 + calcTotalChargeMult(damageBonus.chargeEffects ?? []);
 
@@ -152,13 +166,33 @@ export function calcExpectedSingleHitDamage(
   advantage: ElementalAdvantage,
   mustHit: boolean,
   specialAttack: boolean,
-  damageBonus: DamageBonus = { elementBonus: {}, bulletKindBonus: {}, advantageBonus: 0, disadvantageBonus: 0, chargeEffects: [] },
+  damageBonus: DamageBonus = {
+    elementBonus: {},
+    bulletKindBonus: {},
+    advantageBonus: 0,
+    disadvantageBonus: 0,
+    chargeEffects: [],
+  },
 ): number {
   const nonCritDmg = calcSingleHitDamage(
-    bullet, selfStats, enemyStats, buffs, isGirlReincarnation, advantage, false, damageBonus,
+    bullet,
+    selfStats,
+    enemyStats,
+    buffs,
+    isGirlReincarnation,
+    advantage,
+    false,
+    damageBonus,
   );
   const critDmg = calcSingleHitDamage(
-    bullet, selfStats, enemyStats, buffs, isGirlReincarnation, advantage, true, damageBonus,
+    bullet,
+    selfStats,
+    enemyStats,
+    buffs,
+    isGirlReincarnation,
+    advantage,
+    true,
+    damageBonus,
   );
 
   const criRatePct = getEffectiveCriRate(
@@ -194,11 +228,24 @@ export function calcStageTotalExpected(
   advantage: ElementalAdvantage,
   mustHit: boolean,
   specialAttack: boolean,
-  damageBonus: DamageBonus = { elementBonus: {}, bulletKindBonus: {}, advantageBonus: 0, disadvantageBonus: 0, chargeEffects: [] },
+  damageBonus: DamageBonus = {
+    elementBonus: {},
+    bulletKindBonus: {},
+    advantageBonus: 0,
+    disadvantageBonus: 0,
+    chargeEffects: [],
+  },
 ): number {
   const expectedSingle = calcExpectedSingleHitDamage(
-    bullet, selfStats, enemyStats, buffs, isGirlReincarnation, advantage,
-    mustHit, specialAttack, damageBonus,
+    bullet,
+    selfStats,
+    enemyStats,
+    buffs,
+    isGirlReincarnation,
+    advantage,
+    mustHit,
+    specialAttack,
+    damageBonus,
   );
   return expectedSingle * bullet.count;
 }

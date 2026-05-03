@@ -59,8 +59,12 @@ export default function EnemyBuffsPanel({ buffs, onChange }: Props) {
               onChangeR2={() => {}}
             />
             <p className="text-xs text-gray-400 dark:text-gray-500 pl-32">
-              自身CRI攻撃 {buffs.selfCriAttackR1} − 敵CRI防御 {buffs.enemyCriDefR1}{' '}
-              = combined <span className="font-semibold text-indigo-500 dark:text-indigo-400">{combinedCriAttackR1(buffs)}</span>段
+              自身CRI攻撃 {buffs.selfCriAttackR1} − 敵CRI防御{' '}
+              {buffs.enemyCriDefR1} = combined{' '}
+              <span className="font-semibold text-indigo-500 dark:text-indigo-400">
+                {combinedCriAttackR1(buffs)}
+              </span>
+              段
             </p>
           </div>
 
@@ -76,8 +80,12 @@ export default function EnemyBuffsPanel({ buffs, onChange }: Props) {
               onChangeR2={() => {}}
             />
             <p className="text-xs text-gray-400 dark:text-gray-500 pl-32">
-              自身CRI命中 {buffs.selfCriHitR1} − 敵CRI回避 {buffs.enemyCriEvasionR1}{' '}
-              = combined <span className="font-semibold text-indigo-500 dark:text-indigo-400">{combinedCriHitR1(buffs)}</span>段
+              自身CRI命中 {buffs.selfCriHitR1} − 敵CRI回避{' '}
+              {buffs.enemyCriEvasionR1} = combined{' '}
+              <span className="font-semibold text-indigo-500 dark:text-indigo-400">
+                {combinedCriHitR1(buffs)}
+              </span>
+              段
             </p>
           </div>
         </div>

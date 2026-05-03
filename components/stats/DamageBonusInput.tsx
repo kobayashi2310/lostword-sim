@@ -41,7 +41,10 @@ export default function DamageBonusInput({
     });
 
   const setKind = (kind: BulletKind, pct: number) =>
-    onChange({ ...damageBonus, bulletKindBonus: { ...damageBonus.bulletKindBonus, [kind]: pct } });
+    onChange({
+      ...damageBonus,
+      bulletKindBonus: { ...damageBonus.bulletKindBonus, [kind]: pct },
+    });
 
   const setAdv = (pct: number) =>
     onChange({ ...damageBonus, advantageBonus: pct });
@@ -58,9 +61,13 @@ export default function DamageBonusInput({
         </h4>
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-red-600 dark:text-red-400 w-24 shrink-0">有利補正</span>
+            <span className="text-xs text-red-600 dark:text-red-400 w-24 shrink-0">
+              有利補正
+            </span>
             <input
-              type="number" min={0} max={500}
+              type="number"
+              min={0}
+              max={500}
               value={damageBonus.advantageBonus ?? 0}
               onChange={(e) => {
                 const v = Number(e.target.value);
@@ -70,13 +77,18 @@ export default function DamageBonusInput({
             />
             <span className="text-xs text-gray-500 dark:text-gray-400">%</span>
             <span className="text-xs text-gray-400 dark:text-gray-500">
-              → ×{(2.0 * (1 + (damageBonus.advantageBonus ?? 0) / 100)).toFixed(2)}
+              → ×
+              {(2.0 * (1 + (damageBonus.advantageBonus ?? 0) / 100)).toFixed(2)}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-blue-600 dark:text-blue-400 w-24 shrink-0">不利補正</span>
+            <span className="text-xs text-blue-600 dark:text-blue-400 w-24 shrink-0">
+              不利補正
+            </span>
             <input
-              type="number" min={0} max={500}
+              type="number"
+              min={0}
+              max={500}
               value={damageBonus.disadvantageBonus ?? 0}
               onChange={(e) => {
                 const v = Number(e.target.value);
@@ -86,7 +98,10 @@ export default function DamageBonusInput({
             />
             <span className="text-xs text-gray-500 dark:text-gray-400">%</span>
             <span className="text-xs text-gray-400 dark:text-gray-500">
-              → ×{(0.5 * (1 + (damageBonus.disadvantageBonus ?? 0) / 100)).toFixed(2)}
+              → ×
+              {(0.5 * (1 + (damageBonus.disadvantageBonus ?? 0) / 100)).toFixed(
+                2,
+              )}
             </span>
           </div>
         </div>
@@ -101,16 +116,25 @@ export default function DamageBonusInput({
           <div className="space-y-2">
             {usedElements.map((el) => (
               <div key={el} className="flex items-center gap-2">
-                <span className={`w-6 text-sm font-semibold text-center shrink-0 ${ELEMENT_COLORS[el] ?? ''}`}>
+                <span
+                  className={`w-6 text-sm font-semibold text-center shrink-0 ${ELEMENT_COLORS[el] ?? ''}`}
+                >
                   {el}
                 </span>
                 <input
-                  type="number" min={0} max={500}
+                  type="number"
+                  min={0}
+                  max={500}
                   value={damageBonus.elementBonus[el] ?? 0}
-                  onChange={(e) => { const v = Number(e.target.value); setElement(el, Number.isFinite(v) ? v : 0); }}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    setElement(el, Number.isFinite(v) ? v : 0);
+                  }}
                   className={inputCls}
                 />
-                <span className="text-xs text-gray-500 dark:text-gray-400">%</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  %
+                </span>
               </div>
             ))}
           </div>
@@ -134,7 +158,10 @@ export default function DamageBonusInput({
                   min={0}
                   max={500}
                   value={damageBonus.bulletKindBonus[kind] ?? 0}
-                  onChange={(e) => { const v = Number(e.target.value); setKind(kind, Number.isFinite(v) ? v : 0); }}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    setKind(kind, Number.isFinite(v) ? v : 0);
+                  }}
                   className={inputCls}
                 />
                 <span className="text-xs text-gray-500 dark:text-gray-400">

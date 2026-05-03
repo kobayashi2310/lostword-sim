@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { EnemyWeaknessConfig } from '@/types';
 import { useSimulation } from '@/lib/hooks/useSimulation';
-import { useAppSettings } from '@/lib/hooks/useAppSettings';
+import { useAppSettings } from '@/lib/context/AppSettingsContext';
 
 // Inputs
 import SelfStatsInput from '@/components/stats/SelfStatsInput';
@@ -22,20 +22,30 @@ import OptionsBar from '@/components/layout/OptionsBar';
 import ConfigSidebar from '@/components/layout/ConfigSidebar';
 import { ConfigSection } from '@/components/layout/configSections';
 
-const sectionTitle = 'text-sm font-semibold text-gray-700 dark:text-gray-200 mb-4';
+const sectionTitle =
+  'text-sm font-semibold text-gray-700 dark:text-gray-200 mb-4';
 
 export default function Home() {
-  const { isDark, layoutMode, tabView, setTabView, toggleTheme, toggleLayoutMode } = useAppSettings();
+  const { layoutMode, tabView } = useAppSettings();
   const {
-    selfStats, setSelfStats,
-    enemyStats, setEnemyStats,
-    buffs, setBuffs,
-    bullets, setBullets,
-    hitOrderText, setHitOrderText,
-    isGirlReincarnation, setIsGirlReincarnation,
-    enemyWeakness, setEnemyWeakness,
-    specialAttackActive, setSpecialAttackActive,
-    damageBonus, setDamageBonus,
+    selfStats,
+    setSelfStats,
+    enemyStats,
+    setEnemyStats,
+    buffs,
+    setBuffs,
+    bullets,
+    setBullets,
+    hitOrderText,
+    setHitOrderText,
+    isGirlReincarnation,
+    setIsGirlReincarnation,
+    enemyWeakness,
+    setEnemyWeakness,
+    specialAttackActive,
+    setSpecialAttackActive,
+    damageBonus,
+    setDamageBonus,
     result,
     validationErrors,
   } = useSimulation();
@@ -117,9 +127,13 @@ export default function Home() {
           <div className="max-w-sm">
             <h2 className={sectionTitle}>特殊バフ</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-              蓄力を追加。蓄力同士は加算され、ダメージ式内で × (1 + 蓄力合計) が適用される。
+              蓄力を追加。蓄力同士は加算され、ダメージ式内で × (1 + 蓄力合計)
+              が適用される。
             </p>
-            <SpecialBuffInput damageBonus={damageBonus} onChange={setDamageBonus} />
+            <SpecialBuffInput
+              damageBonus={damageBonus}
+              onChange={setDamageBonus}
+            />
           </div>
         );
       default:
@@ -177,40 +191,46 @@ export default function Home() {
   );
 
   return (
-    <div className={`h-screen flex flex-col overflow-hidden ${isDark ? 'dark bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
-      <Header
-        layoutMode={layoutMode}
-        tabView={tabView}
-        onTabViewChange={setTabView}
-        onToggleLayoutMode={toggleLayoutMode}
-        onToggleTheme={toggleTheme}
-        isDark={isDark}
-        hasResult={!!result}
-      />
+    <div className="h-screen flex flex-col overflow-hidden">
+      <Header hasResult={!!result} />
 
       <main className="flex-1 overflow-hidden flex flex-col">
         {layoutMode === 'split' ? (
           <div className="flex flex-1 overflow-hidden">
             {/* 左: 入力エリア */}
-            <div className="flex flex-col border-r border-gray-200 dark:border-gray-700 overflow-hidden shrink-0" style={{ width: '480px', minWidth: '320px' }}>
-              <ConfigSidebar activeSection={section} onSectionChange={setSection}>
+            <div
+              className="flex flex-col border-r border-gray-200 dark:border-gray-700 overflow-hidden shrink-0"
+              style={{ width: '480px', minWidth: '320px' }}
+            >
+              <ConfigSidebar
+                activeSection={section}
+                onSectionChange={setSection}
+              >
                 {renderConfigContent()}
               </ConfigSidebar>
               {sharedOptionsBar}
             </div>
             {/* 右: 結果エリア */}
-            <div className="flex-1 overflow-y-auto p-4 bg-white dark:bg-gray-900/50">{renderResultsContent()}</div>
+            <div className="flex-1 overflow-y-auto p-4 bg-white dark:bg-gray-900/50">
+              {renderResultsContent()}
+            </div>
           </div>
         ) : (
           /* タブモード */
           <>
             <div className="flex flex-1 overflow-hidden">
               {tabView === 'config' ? (
-                <ConfigSidebar activeSection={section} onSectionChange={setSection} width="w-36">
+                <ConfigSidebar
+                  activeSection={section}
+                  onSectionChange={setSection}
+                  width="w-36"
+                >
                   {renderConfigContent()}
                 </ConfigSidebar>
               ) : (
-                <div className="flex-1 overflow-y-auto p-5">{renderResultsContent()}</div>
+                <div className="flex-1 overflow-y-auto p-5">
+                  {renderResultsContent()}
+                </div>
               )}
             </div>
             {sharedOptionsBar}

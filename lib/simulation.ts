@@ -203,8 +203,15 @@ function runHitOrderSimulation(config: SimulationConfig): {
         (specialAttackActive[bulletId] ?? false);
 
       const expectedDamage = calcExpectedSingleHitDamage(
-        bullet, selfStats, enemyStats, currentBuffs,
-        isGirlReincarnation, advantage, mustHit, specialAtk, damageBonus,
+        bullet,
+        selfStats,
+        enemyStats,
+        currentBuffs,
+        isGirlReincarnation,
+        advantage,
+        mustHit,
+        specialAtk,
+        damageBonus,
       );
       totalSimDamage += expectedDamage;
 
@@ -267,8 +274,15 @@ function runStaticBulletCalculation(config: SimulationConfig): {
     const advantage = getAdvantageForBullet(bullet.element, enemyWeakness);
 
     const expectedDamage = calcStageTotalExpected(
-      bullet, selfStats, enemyStats, initialBuffs,
-      isGirlReincarnation, advantage, mustHit, specialAtk, damageBonus,
+      bullet,
+      selfStats,
+      enemyStats,
+      initialBuffs,
+      isGirlReincarnation,
+      advantage,
+      mustHit,
+      specialAtk,
+      damageBonus,
     );
     totalStaticDamage += expectedDamage;
 

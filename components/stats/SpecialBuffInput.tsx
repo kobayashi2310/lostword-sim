@@ -167,15 +167,17 @@ export default function SpecialBuffInput({ damageBonus, onChange }: Props) {
 
       {/* 追加ボタン */}
       <div className="flex gap-1.5 flex-wrap">
-        {(['霊力', '結界', '体力'] as ChargeKind[]).map((k) => (
-          <button
-            key={k}
-            onClick={() => add(k)}
-            className="text-xs px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-800/50 border border-indigo-300 dark:border-indigo-600 rounded text-indigo-700 dark:text-indigo-300 transition-colors"
-          >
-            + 蓄力[{k}]
-          </button>
-        ))}
+        {(['霊力', '結界', '体力'] as ChargeKind[])
+          .filter((k) => !chargeEffects.some((e) => e.kind === k))
+          .map((k) => (
+            <button
+              key={k}
+              onClick={() => add(k)}
+              className="text-xs px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-800/50 border border-indigo-300 dark:border-indigo-600 rounded text-indigo-700 dark:text-indigo-300 transition-colors"
+            >
+              + 蓄力[{k}]
+            </button>
+          ))}
       </div>
     </div>
   );

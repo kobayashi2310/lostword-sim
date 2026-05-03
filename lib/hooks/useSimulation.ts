@@ -40,14 +40,20 @@ export function useSimulation() {
   const [enemyStats, setEnemyStats] = useState<EnemyStats>(DEFAULT_ENEMY_STATS);
   const [buffs, setBuffs] = useState<BuffStages>(DEFAULT_BUFF_STAGES);
   const [bullets, setBullets] = useState<Bullet[]>(DEFAULT_BULLETS);
-  const [hitOrderText, setHitOrderText] = useState<string>(DEFAULT_HIT_ORDER_TEXT);
+  const [hitOrderText, setHitOrderText] = useState<string>(
+    DEFAULT_HIT_ORDER_TEXT,
+  );
   const [isGirlReincarnation, setIsGirlReincarnation] = useState(false);
 
-  const [enemyWeakness, setEnemyWeakness] = useState<EnemyWeaknessConfig>(createDefaultWeakness);
-  const [specialAttackActive, setSpecialAttackActive] = useState<Record<number, boolean>>(() =>
-    initSpecialAttackActive(DEFAULT_BULLETS)
+  const [enemyWeakness, setEnemyWeakness] = useState<EnemyWeaknessConfig>(
+    createDefaultWeakness,
   );
-  const [damageBonus, setDamageBonus] = useState<DamageBonus>(createDefaultDamageBonus);
+  const [specialAttackActive, setSpecialAttackActive] = useState<
+    Record<number, boolean>
+  >(() => initSpecialAttackActive(DEFAULT_BULLETS));
+  const [damageBonus, setDamageBonus] = useState<DamageBonus>(
+    createDefaultDamageBonus,
+  );
 
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -98,7 +104,7 @@ export function useSimulation() {
           enemyWeakness,
           specialAttackActive,
           damageBonus,
-        })
+        }),
       );
     }, 300);
     return () => {

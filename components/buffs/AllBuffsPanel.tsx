@@ -47,7 +47,6 @@ export default function AllBuffsPanel({ buffs, onChange }: Props) {
             label="速力"
             r1={buffs.speedR1}
             r2={buffs.speedR2}
-            r1Min={0}
             onChangeR1={set('speedR1')}
             onChangeR2={set('speedR2')}
           />
@@ -87,7 +86,6 @@ export default function AllBuffsPanel({ buffs, onChange }: Props) {
             label="命中"
             r1={buffs.hitRateR1}
             r2={buffs.hitRateR2}
-            r1Min={0}
             onChangeR1={set('hitRateR1')}
             onChangeR2={set('hitRateR2')}
           />
@@ -104,7 +102,6 @@ export default function AllBuffsPanel({ buffs, onChange }: Props) {
             label="CRI攻撃"
             r1={buffs.selfCriAttackR1}
             r2={buffs.selfCriAttackR2}
-            r1Min={0}
             onChangeR1={set('selfCriAttackR1')}
             onChangeR2={set('selfCriAttackR2')}
           />
@@ -121,7 +118,6 @@ export default function AllBuffsPanel({ buffs, onChange }: Props) {
             label="CRI命中"
             r1={buffs.selfCriHitR1}
             r2={buffs.selfCriHitR2}
-            r1Min={0}
             onChangeR1={set('selfCriHitR1')}
             onChangeR2={set('selfCriHitR2')}
           />

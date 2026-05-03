@@ -87,10 +87,6 @@ export function clampR2(value: number): number {
   return Math.max(0, Math.min(10, Math.round(value)));
 }
 
-export function clampHitCriR1(value: number): number {
-  return Math.max(0, Math.min(10, Math.round(value)));
-}
-
 // ============================================================
 // バフ段階への追加効果適用
 // ============================================================
@@ -113,7 +109,7 @@ export function applySelfBuff(
       next.yinAttackR1 = clampR1(next.yinAttackR1 + stages);
       break;
     case '自身速力上昇':
-      next.speedR1 = clampHitCriR1(next.speedR1 + stages);
+      next.speedR1 = clampR1(next.speedR1 + stages);
       break;
     case '自身陽防上昇':
       next.selfYangDefR1 = clampR1(next.selfYangDefR1 + stages);
@@ -122,10 +118,10 @@ export function applySelfBuff(
       next.selfYinDefR1 = clampR1(next.selfYinDefR1 + stages);
       break;
     case '自身命中上昇':
-      next.hitRateR1 = clampHitCriR1(next.hitRateR1 + stages);
+      next.hitRateR1 = clampR1(next.hitRateR1 + stages);
       break;
     case '自身CRI命中上昇':
-      next.selfCriHitR1 = clampHitCriR1(next.selfCriHitR1 + stages);
+      next.selfCriHitR1 = clampR1(next.selfCriHitR1 + stages);
       break;
     default:
       break;
@@ -164,7 +160,7 @@ export function applyEnemyDebuff(
       next.yinAttackR1 = clampR1(next.yinAttackR1 - stages);
       break;
     case '対象速力低下':
-      next.speedR1 = clampHitCriR1(Math.max(0, next.speedR1 - stages));
+      next.speedR1 = clampR1(next.speedR1 - stages);
       break;
     default:
       break;
@@ -219,28 +215,28 @@ export function validateBuffStages(buffs: BuffStages): BuffValidationError[] {
   check(buffs.yinAttackR1, '陰攻R1', -10, 10);
   check(buffs.yinAttackR2, '陰攻R2', 0, 10);
 
-  // 速力バフ（0〜+10）
-  check(buffs.speedR1, '速力R1', 0, 10);
+  // 速力バフ（-10〜+10 / R2: 0〜+10）
+  check(buffs.speedR1, '速力R1', -10, 10);
   check(buffs.speedR2, '速力R2', 0, 10);
 
-  // 自身防御バフ（-10〜+10）
+  // 自身防御バフ（-10〜+10 / R2: 0〜+10）
   check(buffs.selfYangDefR1, '自身陽防R1', -10, 10);
   check(buffs.selfYangDefR2, '自身陽防R2', 0, 10);
   check(buffs.selfYinDefR1, '自身陰防R1', -10, 10);
   check(buffs.selfYinDefR2, '自身陰防R2', 0, 10);
 
-  // 敵防御バフ/デバフ（-10〜+10）
+  // 敵防御バフ/デバフ（-10〜+10 / R2: 0〜+10）
   check(buffs.enemyYangDefR1, '敵陽防R1', -10, 10);
   check(buffs.enemyYangDefR2, '敵陽防R2', 0, 10);
   check(buffs.enemyYinDefR1, '敵陰防R1', -10, 10);
   check(buffs.enemyYinDefR2, '敵陰防R2', 0, 10);
 
-  // 命中/CRI系（0〜+10）
-  check(buffs.hitRateR1, '命中R1', 0, 10);
+  // 命中/CRI系（R1: -10〜+10 / R2: 0〜+10）
+  check(buffs.hitRateR1, '命中R1', -10, 10);
   check(buffs.hitRateR2, '命中R2', 0, 10);
-  check(buffs.selfCriAttackR1, '自身CRI攻撃R1', 0, 10);
+  check(buffs.selfCriAttackR1, '自身CRI攻撃R1', -10, 10);
   check(buffs.selfCriAttackR2, '自身CRI攻撃R2', 0, 10);
-  check(buffs.selfCriHitR1, '自身CRI命中R1', 0, 10);
+  check(buffs.selfCriHitR1, '自身CRI命中R1', -10, 10);
   check(buffs.selfCriHitR2, '自身CRI命中R2', 0, 10);
   check(buffs.enemyCriDefR1, '敵CRI防御R1', -10, 10);
   check(buffs.enemyCriEvasionR1, '敵CRI回避R1', -10, 10);
@@ -251,6 +247,6 @@ export function validateBuffStages(buffs: BuffStages): BuffValidationError[] {
 export function buffValidationMessages(buffs: BuffStages): string[] {
   return validateBuffStages(buffs).map(
     ({ field, value, min, max }) =>
-      `${field}: ${value >= 0 ? '+' : ''}${value}（有効範囲: ${min}〜+${max}）`,
+      `${field}: ${value >= 0 ? '+' : ''}${value}（有効範囲: ${min >= 0 ? '+' : ''}${min}〜+${max}）`,
   );
 }

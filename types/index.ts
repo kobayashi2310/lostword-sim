@@ -123,7 +123,7 @@ export interface BuffStages {
   yangAttackR2: number; // 0〜10
   yinAttackR1: number;
   yinAttackR2: number;
-  speedR1: number;      // 0〜10
+  speedR1: number;      // -10〜10
   speedR2: number;
   selfYangDefR1: number;
   selfYangDefR2: number;
@@ -131,15 +131,15 @@ export interface BuffStages {
   selfYinDefR2: number;
 
   // 命中（自身命中バフ + 敵回避デバフ combined）
-  hitRateR1: number; // 0〜10
+  hitRateR1: number; // -10〜10
   hitRateR2: number;
 
   // CRI攻撃（自身バフ・R2 は自身のみ）
-  selfCriAttackR1: number; // 0〜10
+  selfCriAttackR1: number; // -10〜10
   selfCriAttackR2: number; // 0〜10（自身のみ）
 
   // CRI命中（自身バフ・R2 は自身のみ）
-  selfCriHitR1: number; // 0〜10
+  selfCriHitR1: number; // -10〜10
   selfCriHitR2: number; // 0〜10（自身のみ）
 
   // ── 敵バフ/デバフ ──

@@ -8,14 +8,14 @@
 
 | 関数名 | 引数 | 戻り値 | 処理内容 |
 | :--- | :--- | :--- | :--- |
-| `getAtkDefSpdMultiplier` | `stages: number` | `number` (倍率) | 攻撃/防御/速力バフの倍率計算。1段階につき30%加算(正)または除算(負)。 |
+| `getAtkDefSpdMultiplier` | `stages: number` | `number` (倍率) | 攻撃/防御/速力バフの倍率計算。+n段階で(1 + 0.3×n)倍、-n段階で1/(1 + 0.3×|n|)倍。 |
 | `getHitCriHitMultiplier` | `stages: number` | `number` (倍率) | 命中/CRI命中バフの倍率計算。+n段階で(1 + 0.2×n)倍、-n段階で1/(1 + 0.2×|n|)倍。 |
 | `getCritMultiplier` | `r1: number, r2: number` | `number` (倍率) | CRIダメージの最終倍率を計算。R1が負の場合は1/(1 + 0.3×|n|)の減衰を適用。 |
-| `getEffectiveHitRate` | `base, r1, r2, mustHit` | `number` (0-100) | バフと必中フラグを考慮した実効命中率。 |
-| `getEffectiveCriRate` | `base, r1, r2, special` | `number` (0-100) | バフと特効フラグを考慮した実効CRI命中率。 |
-| `applySelfBuff` | `buffs, type, stages` | `BuffStages` | 指定した自身バフを現在のバフ段階に加算・クランプして返す。 |
-| `applyEnemyDebuff` | `buffs, type, stages` | `BuffStages` | 指定した敵デバフを適用（防御低下は負、CRI系は正方向など）して返す。 |
-| `validateBuffStages` | `buffs` | `Error[]` | バフ段階が許容範囲内（-10〜+10等）にあるかチェックする。 |
+| `getEffectiveHitRate` | `base, r1, r2, mustHit` | `number` (0-100) | バフと必中フラグを考慮した実効命中率。負の段階は命中率低下として作用。 |
+| `getEffectiveCriRate` | `base, r1, r2, special` | `number` (0-100) | バフと特効フラグを考慮した実効CRI命中率。負の段階はCRI率低下として作用。 |
+| `applySelfBuff` | `buffs, type, stages` | `BuffStages` | 指定した自身バフを現在のバフ段階に加算・クランプして返す。R1は -10〜10 の範囲。 |
+| `applyEnemyDebuff` | `buffs, type, stages` | `BuffStages` | 指定した敵デバフを適用して返す。バレットの追加効果としてバフ段階を増減させる。 |
+| `validateBuffStages` | `buffs` | `Error[]` | バフ段階が許容範囲内（R1: -10〜+10, R2: 0〜+10）にあるかチェックする。 |
 
 ## 2. damage.ts (ダメージ計算コア)
 

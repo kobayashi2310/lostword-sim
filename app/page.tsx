@@ -28,6 +28,7 @@ import {
 import SelfStatsInput from '@/components/stats/SelfStatsInput';
 import EnemyStatsInput from '@/components/stats/EnemyStatsInput';
 import DamageBonusInput from '@/components/stats/DamageBonusInput';
+import SpecialBuffInput from '@/components/stats/SpecialBuffInput';
 import AllBuffsPanel from '@/components/buffs/AllBuffsPanel';
 import BulletListForm from '@/components/bullets/BulletListForm';
 import HitOrderInput from '@/components/hitorder/HitOrderInput';
@@ -37,7 +38,13 @@ import SimulationResults from '@/components/results/SimulationResults';
 // 定数
 // ============================================================
 type LayoutMode = 'tab' | 'split';
-type ConfigSection = 'stats' | 'buffs' | 'bullets' | 'hitorder' | 'bonus';
+type ConfigSection =
+  | 'stats'
+  | 'buffs'
+  | 'bullets'
+  | 'hitorder'
+  | 'bonus'
+  | 'special';
 
 const CONFIG_SECTIONS: { id: ConfigSection; label: string }[] = [
   { id: 'stats', label: 'ステータス' },
@@ -45,6 +52,7 @@ const CONFIG_SECTIONS: { id: ConfigSection; label: string }[] = [
   { id: 'bullets', label: 'バレット' },
   { id: 'hitorder', label: 'ヒット順' },
   { id: 'bonus', label: '補正値' },
+  { id: 'special', label: '特殊バフ' },
 ];
 
 // デフォルトの特効アクティブ状態
@@ -60,12 +68,7 @@ function initSpecialAttackActive(bullets: Bullet[]): Record<number, boolean> {
 // メインページ
 // ============================================================
 export default function Home() {
-  // テーマ: lazy初期化でlocalStorageから読み込み（useEffect不要）
-  const [isDark, setIsDark] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
-    const saved = localStorage.getItem('theme');
-    return saved !== null ? saved === 'dark' : true;
-  });
+  const [isDark, setIsDark] = useState(true);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('tab');
   const [tabView, setTabView] = useState<'config' | 'result'>('config');
   const [section, setSection] = useState<ConfigSection>('stats');
@@ -91,6 +94,12 @@ export default function Home() {
 
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+
+  // マウント後に localStorage からテーマを復元
+  useEffect(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved !== null) setIsDark(saved === 'dark');
+  }, []);
 
   // テーマ変更時に localStorage へ保存
   useEffect(() => {
@@ -164,7 +173,7 @@ export default function Home() {
   ]);
 
   // ============================================================
-  // 結果タブ用ハンドラ（setterを更新するだけ — useEffect が再計算）
+  // 結果タブ用ハンドラ
   // ============================================================
   const handleWeaknessChange = (w: EnemyWeaknessConfig) => setEnemyWeakness(w);
   const handleSpecialAttackChange = (bulletId: number, active: boolean) =>
@@ -192,7 +201,7 @@ export default function Home() {
     'text-sm font-semibold text-gray-700 dark:text-gray-200 mb-4';
 
   // ============================================================
-  // 入力エリア（JSX変数 — コンポーネント定義にするとアンマウントが起きる）
+  // 入力エリア
   // ============================================================
   const configContent = (
     <>
@@ -231,10 +240,19 @@ export default function Home() {
         <div className="max-w-sm">
           <h2 className={sectionTitle}>補正値</h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-            有利/不利補正・属性/弾種ダメージアップを設定。属性と弾種は加算。
+            有利/不利補正・属性/弾種ダメージアップを設定
           </p>
           <DamageBonusInput
             bullets={bullets}
+            damageBonus={damageBonus}
+            onChange={setDamageBonus}
+          />
+        </div>
+      )}
+      {section === 'special' && (
+        <div className="max-w-sm">
+          <h2 className={sectionTitle}>特殊バフ</h2>
+          <SpecialBuffInput
             damageBonus={damageBonus}
             onChange={setDamageBonus}
           />
@@ -411,7 +429,6 @@ export default function Home() {
           ) : (
             <div className="flex-1 overflow-y-auto p-5">{resultsContent}</div>
           )}
-          {/* フッター（タブモードのみ） */}
           {optionsBar}
         </>
       )}

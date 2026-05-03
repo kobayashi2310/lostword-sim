@@ -199,16 +199,58 @@ export function createDefaultWeakness(): EnemyWeaknessConfig {
 // シミュレーション設定
 // ============================================================
 
+// ============================================================
+// 蓄力（特殊バフ）
+// 蓄力同士は加算。合計倍率をダメージ計算式内で × (1 + totalChargeMult) として適用
+// ============================================================
+
+export interface ChargeSpirit {   // 蓄力[霊力]
+  kind: '霊力';
+  ratePerStack: number; // 整数 %、0以上（例: 100 = 100%/スタック）
+  stacks: number;       // 0〜5
+}
+
+export interface ChargeBarrier {  // 蓄力[結界]
+  kind: '結界';
+  ratePerStack: number; // 整数 %、0以上
+  stacks: number;       // 0〜5
+}
+
+export interface ChargeHP {       // 蓄力[体力]
+  kind: '体力';
+  maxRate: number;    // 最大倍率 整数 %、0以上（HP100%時の蓄力倍率）
+  hpPercent: number;  // 現在の体力 整数 1〜100 (%)
+}
+
+export type ChargeEffect = ChargeSpirit | ChargeBarrier | ChargeHP;
+
+/** 蓄力合計倍率（小数）を計算。加算方式。 */
+export function calcTotalChargeMult(effects: ChargeEffect[]): number {
+  return effects.reduce((sum, e) => {
+    if (e.kind === '霊力' || e.kind === '結界') {
+      return sum + (e.ratePerStack / 100) * e.stacks;
+    }
+    return sum + (e.maxRate / 100) * (e.hpPercent / 100);
+  }, 0);
+}
+
 // 補正値設定
 export interface DamageBonus {
-  elementBonus: Partial<Record<Element, number>>;       // 属性ダメージアップ %（加算）
-  bulletKindBonus: Partial<Record<BulletKind, number>>; // 弾種ダメージアップ %（加算）
-  advantageBonus: number;    // 有利属性ダメージアップ % → E = 2.0 × (1 + n/100)
-  disadvantageBonus: number; // 不利属性ダメージアップ % → E = 0.5 × (1 + n/100)
+  elementBonus: Partial<Record<Element, number>>;
+  bulletKindBonus: Partial<Record<BulletKind, number>>;
+  advantageBonus: number;
+  disadvantageBonus: number;
+  chargeEffects: ChargeEffect[]; // 蓄力リスト
 }
 
 export function createDefaultDamageBonus(): DamageBonus {
-  return { elementBonus: {}, bulletKindBonus: {}, advantageBonus: 0, disadvantageBonus: 0 };
+  return {
+    elementBonus: {},
+    bulletKindBonus: {},
+    advantageBonus: 0,
+    disadvantageBonus: 0,
+    chargeEffects: [],
+  };
 }
 
 export interface SimulationConfig {

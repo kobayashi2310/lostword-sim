@@ -6,6 +6,7 @@ import type {
   EnemyStats,
   SelfStats,
 } from '@/types';
+import { calcTotalChargeMult } from '@/types';
 import {
   getAtkDefSpdMultiplier,
   getCritMultiplier,
@@ -101,7 +102,7 @@ export function calcSingleHitDamage(
   isGirlReincarnation: boolean,
   advantage: ElementalAdvantage,
   isCrit: boolean,
-  damageBonus: DamageBonus = { elementBonus: {}, bulletKindBonus: {}, advantageBonus: 0, disadvantageBonus: 0 },
+  damageBonus: DamageBonus = { elementBonus: {}, bulletKindBonus: {}, advantageBonus: 0, disadvantageBonus: 0, chargeEffects: [] },
 ): number {
   const attackPower = calcAttackPower(selfStats, buffs, bullet);
   const enemyDefense = calcEnemyDefense(enemyStats, buffs, bullet);
@@ -122,6 +123,8 @@ export function calcSingleHitDamage(
   const bonusMult = 1
     + (damageBonus.elementBonus[bullet.element] ?? 0) / 100
     + (damageBonus.bulletKindBonus[bullet.bulletKind] ?? 0) / 100;
+  // 蓄力（加算合計後に乗算、floor内に含める）
+  const chargeMult = 1 + calcTotalChargeMult(damageBonus.chargeEffects ?? []);
 
   return Math.floor(
     bullet.power *
@@ -130,7 +133,8 @@ export function calcSingleHitDamage(
       0.4 *
       elementalMult *
       critMult *
-      bonusMult,
+      bonusMult *
+      chargeMult,
   );
 }
 
@@ -148,7 +152,7 @@ export function calcExpectedSingleHitDamage(
   advantage: ElementalAdvantage,
   mustHit: boolean,
   specialAttack: boolean,
-  damageBonus: DamageBonus = { elementBonus: {}, bulletKindBonus: {}, advantageBonus: 0, disadvantageBonus: 0 },
+  damageBonus: DamageBonus = { elementBonus: {}, bulletKindBonus: {}, advantageBonus: 0, disadvantageBonus: 0, chargeEffects: [] },
 ): number {
   const nonCritDmg = calcSingleHitDamage(
     bullet, selfStats, enemyStats, buffs, isGirlReincarnation, advantage, false, damageBonus,
@@ -190,7 +194,7 @@ export function calcStageTotalExpected(
   advantage: ElementalAdvantage,
   mustHit: boolean,
   specialAttack: boolean,
-  damageBonus: DamageBonus = { elementBonus: {}, bulletKindBonus: {}, advantageBonus: 0, disadvantageBonus: 0 },
+  damageBonus: DamageBonus = { elementBonus: {}, bulletKindBonus: {}, advantageBonus: 0, disadvantageBonus: 0, chargeEffects: [] },
 ): number {
   const expectedSingle = calcExpectedSingleHitDamage(
     bullet, selfStats, enemyStats, buffs, isGirlReincarnation, advantage,

@@ -121,7 +121,7 @@ export function applySelfBuff(
       next.hitRateR1 = clampHitCriR1(next.hitRateR1 + stages);
       break;
     case '自身CRI命中上昇':
-      next.criHitR1 = clampHitCriR1(next.criHitR1 + stages);
+      next.selfCriHitR1 = clampHitCriR1(next.selfCriHitR1 + stages);
       break;
     default:
       break;
@@ -147,11 +147,11 @@ export function applyEnemyDebuff(
       next.enemyYinDefR1 = clampR1(next.enemyYinDefR1 - stages);
       break;
     case '対象CRI防御低下':
-      // CRI防御デバフ = combined criAttack ステージを増加
-      next.criAttackR1 = clampHitCriR1(next.criAttackR1 + stages);
+      // デバフなので enemyCriDefR1 を減らす（負方向 = プレイヤーのCRI強化）
+      next.enemyCriDefR1 = clampR1(next.enemyCriDefR1 - stages);
       break;
     case '対象CRI回避低下':
-      next.criHitR1 = clampHitCriR1(next.criHitR1 + stages);
+      next.enemyCriEvasionR1 = clampR1(next.enemyCriEvasionR1 - stages);
       break;
     case '対象陽攻低下':
       next.yangAttackR1 = clampR1(next.yangAttackR1 - stages);
@@ -174,26 +174,18 @@ export function applyEnemyDebuff(
 
 export function createDefaultBuffStages(): BuffStages {
   return {
-    yangAttackR1: 0,
-    yangAttackR2: 0,
-    yinAttackR1: 0,
-    yinAttackR2: 0,
-    speedR1: 0,
-    speedR2: 0,
-    selfYangDefR1: 0,
-    selfYangDefR2: 0,
-    selfYinDefR1: 0,
-    selfYinDefR2: 0,
-    enemyYangDefR1: 0,
-    enemyYangDefR2: 0,
-    enemyYinDefR1: 0,
-    enemyYinDefR2: 0,
-    hitRateR1: 0,
-    hitRateR2: 0,
-    criAttackR1: 0,
-    criAttackR2: 0,
-    criHitR1: 0,
-    criHitR2: 0,
+    yangAttackR1: 0, yangAttackR2: 0,
+    yinAttackR1: 0,  yinAttackR2: 0,
+    speedR1: 0,      speedR2: 0,
+    selfYangDefR1: 0, selfYangDefR2: 0,
+    selfYinDefR1: 0,  selfYinDefR2: 0,
+    hitRateR1: 0, hitRateR2: 0,
+    selfCriAttackR1: 0, selfCriAttackR2: 0,
+    selfCriHitR1: 0,    selfCriHitR2: 0,
+    enemyYangDefR1: 0, enemyYangDefR2: 0,
+    enemyYinDefR1: 0,  enemyYinDefR2: 0,
+    enemyCriDefR1: 0,
+    enemyCriEvasionR1: 0,
   };
 }
 
@@ -242,10 +234,12 @@ export function validateBuffStages(buffs: BuffStages): BuffValidationError[] {
   // 命中/CRI系（0〜+10）
   check(buffs.hitRateR1, '命中R1', 0, 10);
   check(buffs.hitRateR2, '命中R2', 0, 10);
-  check(buffs.criAttackR1, 'CRI攻撃R1', 0, 10);
-  check(buffs.criAttackR2, 'CRI攻撃R2', 0, 10);
-  check(buffs.criHitR1, 'CRI命中R1', 0, 10);
-  check(buffs.criHitR2, 'CRI命中R2', 0, 10);
+  check(buffs.selfCriAttackR1, '自身CRI攻撃R1', 0, 10);
+  check(buffs.selfCriAttackR2, '自身CRI攻撃R2', 0, 10);
+  check(buffs.selfCriHitR1, '自身CRI命中R1', 0, 10);
+  check(buffs.selfCriHitR2, '自身CRI命中R2', 0, 10);
+  check(buffs.enemyCriDefR1, '敵CRI防御R1', -10, 10);
+  check(buffs.enemyCriEvasionR1, '敵CRI回避R1', -10, 10);
 
   return errors;
 }

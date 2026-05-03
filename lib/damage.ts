@@ -6,7 +6,7 @@ import type {
   EnemyStats,
   SelfStats,
 } from '@/types';
-import { calcTotalChargeMult } from '@/types';
+import { calcTotalChargeMult, combinedCriAttackR1, combinedCriHitR1 } from '@/types';
 import {
   getAtkDefSpdMultiplier,
   getCritMultiplier,
@@ -117,7 +117,7 @@ export function calcSingleHitDamage(
     damageBonus.disadvantageBonus,
   );
   const critMult = isCrit
-    ? getCritMultiplier(buffs.criAttackR1, buffs.criAttackR2)
+    ? getCritMultiplier(combinedCriAttackR1(buffs), buffs.selfCriAttackR2)
     : 1;
   // 属性・弾種ダメージアップ（加算方式）
   const bonusMult = 1
@@ -163,8 +163,8 @@ export function calcExpectedSingleHitDamage(
 
   const criRatePct = getEffectiveCriRate(
     bullet.criRate,
-    buffs.criHitR1,
-    buffs.criHitR2,
+    combinedCriHitR1(buffs),
+    buffs.selfCriHitR2,
     specialAttack,
   );
   const criRate = criRatePct / 100;

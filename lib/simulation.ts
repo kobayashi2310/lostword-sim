@@ -103,10 +103,12 @@ function makeBuffChangeLabel(field: keyof BuffStages, delta: number): string {
     enemyYinDefR2: '敵陰防R2',
     hitRateR1: '命中R1',
     hitRateR2: '命中R2',
-    criAttackR1: 'CRI攻撃R1',
-    criAttackR2: 'CRI攻撃R2',
-    criHitR1: 'CRI命中R1',
-    criHitR2: 'CRI命中R2',
+    selfCriAttackR1: '自身CRI攻撃R1',
+    selfCriAttackR2: '自身CRI攻撃R2',
+    selfCriHitR1: '自身CRI命中R1',
+    selfCriHitR2: '自身CRI命中R2',
+    enemyCriDefR1: '敵CRI防御R1',
+    enemyCriEvasionR1: '敵CRI回避R1',
   };
   const sign = delta >= 0 ? '+' : '';
   return `${labels[field]} ${sign}${delta}`;

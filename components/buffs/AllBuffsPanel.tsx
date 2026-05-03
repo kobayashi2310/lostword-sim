@@ -77,30 +77,7 @@ export default function AllBuffsPanel({ buffs, onChange }: Props) {
         </div>
       </div>
 
-      {/* 敵 防御デバフ */}
-      <div>
-        <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-          敵 防御バフ/デバフ
-        </h4>
-        <div className="space-y-1.5">
-          <BuffRankInput
-            label="敵 陽防"
-            r1={buffs.enemyYangDefR1}
-            r2={buffs.enemyYangDefR2}
-            onChangeR1={set('enemyYangDefR1')}
-            onChangeR2={set('enemyYangDefR2')}
-          />
-          <BuffRankInput
-            label="敵 陰防"
-            r1={buffs.enemyYinDefR1}
-            r2={buffs.enemyYinDefR2}
-            onChangeR1={set('enemyYinDefR1')}
-            onChangeR2={set('enemyYinDefR2')}
-          />
-        </div>
-      </div>
-
-      {/* 命中系 */}
+      {/* 命中バフ（自身命中バフ + 敵回避デバフ合算） */}
       <div>
         <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
           命中バフ
@@ -117,36 +94,36 @@ export default function AllBuffsPanel({ buffs, onChange }: Props) {
         </div>
       </div>
 
-      {/* CRI系 */}
+      {/* 自身 CRI攻撃バフ */}
       <div>
         <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-          CRI攻撃バフ
+          自身 CRI攻撃バフ
         </h4>
         <div className="space-y-1.5">
           <BuffRankInput
             label="CRI攻撃"
-            r1={buffs.criAttackR1}
-            r2={buffs.criAttackR2}
+            r1={buffs.selfCriAttackR1}
+            r2={buffs.selfCriAttackR2}
             r1Min={0}
-            onChangeR1={set('criAttackR1')}
-            onChangeR2={set('criAttackR2')}
+            onChangeR1={set('selfCriAttackR1')}
+            onChangeR2={set('selfCriAttackR2')}
           />
         </div>
       </div>
 
-      {/* CRI命中系 */}
+      {/* 自身 CRI命中バフ */}
       <div>
         <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-          CRI命中バフ
+          自身 CRI命中バフ
         </h4>
         <div className="space-y-1.5">
           <BuffRankInput
             label="CRI命中"
-            r1={buffs.criHitR1}
-            r2={buffs.criHitR2}
+            r1={buffs.selfCriHitR1}
+            r2={buffs.selfCriHitR2}
             r1Min={0}
-            onChangeR1={set('criHitR1')}
-            onChangeR2={set('criHitR2')}
+            onChangeR1={set('selfCriHitR1')}
+            onChangeR2={set('selfCriHitR2')}
           />
         </div>
       </div>

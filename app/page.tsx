@@ -11,6 +11,7 @@ import EnemyStatsInput from '@/components/stats/EnemyStatsInput';
 import DamageBonusInput from '@/components/stats/DamageBonusInput';
 import SpecialBuffInput from '@/components/stats/SpecialBuffInput';
 import AllBuffsPanel from '@/components/buffs/AllBuffsPanel';
+import EnemyBuffsPanel from '@/components/buffs/EnemyBuffsPanel';
 import BulletListForm from '@/components/bullets/BulletListForm';
 import HitOrderInput from '@/components/hitorder/HitOrderInput';
 import SimulationResults from '@/components/results/SimulationResults';
@@ -60,17 +61,26 @@ export default function Home() {
               <h2 className={sectionTitle}>自身ステータス</h2>
               <SelfStatsInput stats={selfStats} onChange={setSelfStats} />
             </div>
-            <hr className="border-gray-200 dark:border-gray-700" />
+          </div>
+        );
+      case 'enemy':
+        return (
+          <div className="max-w-sm space-y-6">
             <div>
               <h2 className={sectionTitle}>敵ステータス</h2>
               <EnemyStatsInput stats={enemyStats} onChange={setEnemyStats} />
+            </div>
+            <hr className="border-gray-200 dark:border-gray-700" />
+            <div>
+              <h2 className={sectionTitle}>敵バフ/デバフ</h2>
+              <EnemyBuffsPanel buffs={buffs} onChange={setBuffs} />
             </div>
           </div>
         );
       case 'buffs':
         return (
           <div className="max-w-sm">
-            <h2 className={sectionTitle}>バフ/デバフ段階</h2>
+            <h2 className={sectionTitle}>自身バフ/デバフ段階</h2>
             <AllBuffsPanel buffs={buffs} onChange={setBuffs} />
           </div>
         );

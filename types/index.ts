@@ -115,44 +115,53 @@ export interface EnemyStats {
 
 // ============================================================
 // バフ段階
-// R1: -10〜+10、R2: 0〜+10
-// 命中・CRI系: 0〜+10（combined = 自身バフ + 相手デバフ）
 // ============================================================
 
 export interface BuffStages {
-  // 自身攻撃バフ
+  // ── 自身バフ ──
   yangAttackR1: number; // -10〜10
   yangAttackR2: number; // 0〜10
   yinAttackR1: number;
   yinAttackR2: number;
-
-  // 自身速力バフ
-  speedR1: number; // 0〜10
+  speedR1: number;      // 0〜10
   speedR2: number;
-
-  // 自身防御バフ（硬質弾攻撃力加算用）
-  selfYangDefR1: number; // -10〜10
+  selfYangDefR1: number;
   selfYangDefR2: number;
   selfYinDefR1: number;
   selfYinDefR2: number;
 
-  // 敵防御デバフ（マイナスで防御低下）
+  // 命中（自身命中バフ + 敵回避デバフ combined）
+  hitRateR1: number; // 0〜10
+  hitRateR2: number;
+
+  // CRI攻撃（自身バフ・R2 は自身のみ）
+  selfCriAttackR1: number; // 0〜10
+  selfCriAttackR2: number; // 0〜10（自身のみ）
+
+  // CRI命中（自身バフ・R2 は自身のみ）
+  selfCriHitR1: number; // 0〜10
+  selfCriHitR2: number; // 0〜10（自身のみ）
+
+  // ── 敵バフ/デバフ ──
   enemyYangDefR1: number; // -10〜10
   enemyYangDefR2: number;
   enemyYinDefR1: number;
   enemyYinDefR2: number;
+  // 敵CRI防御バフ/デバフ（正=バフ=プレイヤーのCRI減衰、負=デバフ=CRI強化）
+  enemyCriDefR1: number;      // -10〜10
+  // 敵CRI回避バフ/デバフ（正=バフ=命中率低下、負=デバフ=命中率強化）
+  enemyCriEvasionR1: number;  // -10〜10
+}
 
-  // 命中バフ + 回避デバフ（combined）
-  hitRateR1: number; // 0〜10
-  hitRateR2: number;
-
-  // CRI攻撃バフ + CRI防御デバフ（combined）
-  criAttackR1: number; // 0〜10
-  criAttackR2: number;
-
-  // CRI命中バフ + CRI回避デバフ（combined）
-  criHitR1: number; // 0〜10
-  criHitR2: number;
+// combined CRI攻撃 R1 = clamp(自身R1 − 敵CRI防御R1, 0, 10)
+// 例: 自身6段 − 敵+3バフ = 3段
+// 例: 自身3段 − 敵-5デバフ = 8段
+export function combinedCriAttackR1(b: BuffStages): number {
+  return Math.max(0, Math.min(10, b.selfCriAttackR1 - b.enemyCriDefR1));
+}
+// combined CRI命中 R1 = clamp(自身R1 − 敵CRI回避R1, 0, 10)
+export function combinedCriHitR1(b: BuffStages): number {
+  return Math.max(0, Math.min(10, b.selfCriHitR1 - b.enemyCriEvasionR1));
 }
 
 // ============================================================

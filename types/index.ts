@@ -153,15 +153,16 @@ export interface BuffStages {
   enemyCriEvasionR1: number;  // -10〜10
 }
 
-// combined CRI攻撃 R1 = clamp(自身R1 − 敵CRI防御R1, 0, 10)
+// combined CRI攻撃 R1 = clamp(自身R1 − 敵CRI防御R1, -10, 10)
 // 例: 自身6段 − 敵+3バフ = 3段
 // 例: 自身3段 − 敵-5デバフ = 8段
+// 例: 自身6段 − 敵+10バフ = -4段
 export function combinedCriAttackR1(b: BuffStages): number {
-  return Math.max(0, Math.min(10, b.selfCriAttackR1 - b.enemyCriDefR1));
+  return Math.max(-10, Math.min(10, b.selfCriAttackR1 - b.enemyCriDefR1));
 }
-// combined CRI命中 R1 = clamp(自身R1 − 敵CRI回避R1, 0, 10)
+// combined CRI命中 R1 = clamp(自身R1 − 敵CRI回避R1, -10, 10)
 export function combinedCriHitR1(b: BuffStages): number {
-  return Math.max(0, Math.min(10, b.selfCriHitR1 - b.enemyCriEvasionR1));
+  return Math.max(-10, Math.min(10, b.selfCriHitR1 - b.enemyCriEvasionR1));
 }
 
 // ============================================================

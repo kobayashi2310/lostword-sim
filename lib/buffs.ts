@@ -16,26 +16,30 @@ export function getAtkDefSpdMultiplier(stages: number): number {
 }
 
 /**
- * 命中・CRI命中系バフの倍率計算（0〜+10のみ）
+ * 命中・CRI命中系バフの倍率計算
  * +n段階: ×(1 + 0.2×n)
+ * -n段階: ÷(1 + 0.2×n)
  */
 export function getHitCriHitMultiplier(stages: number): number {
-  return 1 + 0.2 * Math.max(0, stages);
+  if (stages === 0) return 1;
+  const base = 1 + 0.2 * Math.abs(stages);
+  return stages > 0 ? base : 1 / base;
 }
 
 /**
  * CRIダメージ倍率計算
  * 無補正時: +100% → ×2.0
- * CRIダメージ増加率 = 100% × (1 + 0.3×R1) × (1 + 0.3×R2)
+ * CRIダメージ増加率 = 100% × (R1補正) × (R2補正)
+ * R1補正: +n段階で (1 + 0.3×n), -n段階で 1/(1 + 0.3×n)
  * クリティカル補正 = 1 + CRIダメージ増加率
  */
 export function getCritMultiplier(
   criAttackR1: number,
   criAttackR2: number,
 ): number {
-  const r1 = Math.max(0, criAttackR1);
-  const r2 = Math.max(0, criAttackR2);
-  const criDamageRate = 1.0 * (1 + 0.3 * r1) * (1 + 0.3 * r2);
+  const r1Mult = getAtkDefSpdMultiplier(criAttackR1);
+  const r2Mult = getAtkDefSpdMultiplier(Math.max(0, criAttackR2));
+  const criDamageRate = 1.0 * r1Mult * r2Mult;
   return 1 + criDamageRate;
 }
 

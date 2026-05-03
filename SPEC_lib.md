@@ -9,8 +9,8 @@
 | 関数名 | 引数 | 戻り値 | 処理内容 |
 | :--- | :--- | :--- | :--- |
 | `getAtkDefSpdMultiplier` | `stages: number` | `number` (倍率) | 攻撃/防御/速力バフの倍率計算。1段階につき30%加算(正)または除算(負)。 |
-| `getHitCriHitMultiplier` | `stages: number` | `number` (倍率) | 命中/CRI命中バフの倍率計算。1段階につき20%加算。 |
-| `getCritMultiplier` | `r1: number, r2: number` | `number` (倍率) | CRIダメージの最終倍率を計算。R1/R2それぞれの補正を乗算して算出。 |
+| `getHitCriHitMultiplier` | `stages: number` | `number` (倍率) | 命中/CRI命中バフの倍率計算。+n段階で(1 + 0.2×n)倍、-n段階で1/(1 + 0.2×|n|)倍。 |
+| `getCritMultiplier` | `r1: number, r2: number` | `number` (倍率) | CRIダメージの最終倍率を計算。R1が負の場合は1/(1 + 0.3×|n|)の減衰を適用。 |
 | `getEffectiveHitRate` | `base, r1, r2, mustHit` | `number` (0-100) | バフと必中フラグを考慮した実効命中率。 |
 | `getEffectiveCriRate` | `base, r1, r2, special` | `number` (0-100) | バフと特効フラグを考慮した実効CRI命中率。 |
 | `applySelfBuff` | `buffs, type, stages` | `BuffStages` | 指定した自身バフを現在のバフ段階に加算・クランプして返す。 |

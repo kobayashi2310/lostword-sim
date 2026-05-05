@@ -10,27 +10,20 @@
 | `YinYang` | `'陽気' \| '陰気'` | バレットの攻撃属性。 |
 | `BulletKind` | `'光弾' \| 'レーザー弾' \| ... \| 'ミサイル弾'` | バレットの種類（9種類）。弾種補正の対象。 |
 | `ElementalAdvantage`| `'有利' \| '等倍' \| '不利'` | 属性相性の結果。 |
+| `BarrierAilmentType` | `'燃焼' \| '凍結' \| '帯電' \| '毒霧' \| '暗闇'` | 結界異常の種類。 |
 
-## 2. バレット関連 (Bullet & Effects)
+## 2. 結界と能力 (Barriers & Ability)
 
-### `Bullet` インターフェース
-個別のバレット段のステータスを定義します。
+### `BarrierStatus`
+- `ailment`: `BarrierAilmentType | null`
 
-- `id`: number (1〜6)
-- `element`: Element
-- `yinYang`: YinYang
-- `bulletKind`: BulletKind
-- `power`: number (威力)
-- `count`: number (弾数)
-- `hitRate`: number (基礎命中率 0-100)
-- `criRate`: number (基礎CRI率 0-100)
-- `slashPercent`: number (斬裂倍率 %)
-- `hardPercent`: number (硬質倍率 %)
-- `effects`: `BulletEffect[]` (追加効果のリスト)
+### `AbilityConfig`
+キャラクター固有の能力設定。
+- `convertAilments`: 結界異常を特定のバフパターン（陽攻/陰攻等）に変換する設定のリスト。
+- `nullifyAilments`: 指定した結界異常の効果を無効化するリスト。
 
-### `BulletEffect` (Discriminated Union)
-バレットが持つ特殊能力やバフ・デバフ効果。
-
+## 3. バレット関連 (Bullet & Effects)
+... (略) ...
 | kind | 追加プロパティ | 説明 |
 | :--- | :--- | :--- |
 | `'必中'` | - | 命中率を100%として計算。 |
@@ -38,11 +31,11 @@
 | `'自身バフ'` | `buffType`, `probability`, `stages` | 攻撃後に自身に付与されるバフ。 |
 | `'対象デバフ'` | `debuffType`, `probability`, `stages` | 攻撃後に対象に付与されるデバフ。 |
 
-## 3. ステータス・バフ関連
+## 4. ステータス・バフ関連
 
 ### `SelfStats` / `EnemyStats`
-- **SelfStats**: 陽攻, 陰攻, 速力, 陽防, 陰防
-- **EnemyStats**: 陽防, 陰防
+- **SelfStats**: 陽攻, 陰攻, 速力, 陽防, 陰防, `barriers` (5枚), `ability`
+- **EnemyStats**: 陽防, 陰防, `hasBarriers` (フラグ), `initialBarriers` (1-7枚), `isFullBreak` (初期状態フラグ), `barriers` (7枚), `ability`
 
 ### `BuffStages`
 全バフ項目の段階を保持するオブジェクト。

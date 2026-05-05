@@ -109,7 +109,7 @@ function StaticTable({
             const mustHit = bullet?.effects.some((e) => e.kind === '必中');
             const special = bullet?.effects.some((e) => e.kind === '特効');
             const pct =
-              total > 0 ? ((br.expectedDamage / total) * 100).toFixed(1) : '0';
+              total > 0 ? ((br.expectedDamage / total) * 100).toFixed(1) : '0.0';
             return (
               <tr
                 key={br.bulletId}

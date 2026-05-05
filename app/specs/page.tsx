@@ -184,11 +184,14 @@ export default function SpecsPage() {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                <h4 className="font-bold mb-2 text-orange-600">燃焼 / 毒霧</h4>
-                <p>1枚につき、対象の特定の攻防が 12.5% 低下します。</p>
+                <h4 className="font-bold mb-2 text-orange-600">
+                  燃焼 / 毒霧 / 凍結
+                </h4>
+                <p>1枚につき、対象の特定のステータスが 12.5% 低下します。</p>
                 <ul className="mt-2 text-xs space-y-1 list-disc pl-4">
                   <li>燃焼: 陰攻・陰防が低下</li>
                   <li>毒霧: 陽攻・陽防が低下</li>
+                  <li>凍結: 速力が低下</li>
                   <li>計算: 基礎ステータス × 0.875 ^ 枚数</li>
                 </ul>
               </div>
@@ -208,6 +211,13 @@ export default function SpecsPage() {
               <p>
                 キャラクターが特定の結界異常を「無効化」する場合、上記のデバフ効果は一切受けません。
                 また「バフに変換」する場合、デバフを無効化した上で、異常枚数をそのまま特定のバフ段階に加算します。
+              </p>
+            </div>
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800 rounded">
+              <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                <strong>💡 結界の管理について:</strong>
+                <br />
+                シミュレーターでは結界を番号（1〜7）で管理しています。バレットが結界を割った場合、その番号に付与されていた結界異常も同時に消失し、以降のダメージ計算には反映されません。
               </p>
             </div>
           </div>

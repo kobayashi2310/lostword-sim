@@ -8,9 +8,10 @@ import type {
   SimulationConfig,
   SimulationResult,
   SingleHitResult,
+  BarrierAilmentType,
 } from '@/types';
 import { getAdvantageForBullet } from '@/types';
-import { applySelfBuff, applyEnemyDebuff } from './buffs';
+import { applySelfBuff, applyEnemyDebuff, getAilmentStacks } from './buffs';
 import { calcExpectedSingleHitDamage, calcStageTotalExpected } from './damage';
 import { calcWeightedMultipliers } from './weighted';
 
@@ -22,7 +23,7 @@ function hasMustHit(effects: BulletEffect[]): boolean {
   return effects.some((e) => e.kind === '必中');
 }
 
-/** バレットが特効能力を持つか（刺さっているかどうかは別途 specialAttackActive で管理） */
+/** バレットが特効能力を持つか */
 export function hasSpecialAttackCapability(effects: BulletEffect[]): boolean {
   return effects.some((e) => e.kind === '特効');
 }
@@ -33,8 +34,8 @@ export function hasSpecialAttackCapability(effects: BulletEffect[]): boolean {
 
 export interface HitOrderValidationError {
   bulletId: number;
-  expected: number; // バレット設定の弾数
-  actual: number; // ヒット順での出現数
+  expected: number;
+  actual: number;
   message: string;
 }
 
@@ -43,16 +44,12 @@ export function validateHitOrder(
   hitOrder: HitOrder,
 ): HitOrderValidationError[] {
   const errors: HitOrderValidationError[] = [];
-
-  // ヒット順での各バレットの出現数を集計
   const hitCount = new Map<number, number>();
   for (const group of hitOrder) {
     for (const id of group) {
       hitCount.set(id, (hitCount.get(id) ?? 0) + 1);
     }
   }
-
-  // バレット設定の弾数とヒット順の出現数を比較
   const bulletIds = new Set(bullets.map((b) => b.id));
   for (const bullet of bullets) {
     const actual = hitCount.get(bullet.id) ?? 0;
@@ -65,8 +62,6 @@ export function validateHitOrder(
       });
     }
   }
-
-  // ヒット順に存在しないバレットIDが含まれていないか
   for (const [id, count] of hitCount) {
     if (!bulletIds.has(id)) {
       errors.push({
@@ -77,7 +72,6 @@ export function validateHitOrder(
       });
     }
   }
-
   return errors;
 }
 
@@ -117,8 +111,7 @@ function makeBuffChangeLabel(field: keyof BuffStages, delta: number): string {
 }
 
 // ============================================================
-// バレットのバフ/デバフ追加効果をバフ段階に反映し、差分を返す
-// （prob=100%前提で処理する）
+// バレットのバフ/デバフ追加効果反映
 // ============================================================
 
 function applyBulletEffects(
@@ -134,7 +127,6 @@ function applyBulletEffects(
     if (effect.kind === '自身バフ') {
       const before = { ...current };
       current = applySelfBuff(current, effect.buffType, effect.stages);
-      // 変化したフィールドを記録
       for (const key of Object.keys(current) as (keyof BuffStages)[]) {
         const delta = current[key] - before[key];
         if (delta !== 0) {
@@ -167,8 +159,7 @@ function applyBulletEffects(
 }
 
 // ============================================================
-// バフ段階のリセット（フルブレイク用）
-// 敵に関連するバフ・デバフのみをリセットする
+// 敵バフのリセット
 // ============================================================
 
 function resetEnemyBuffs(buffs: BuffStages): BuffStages {
@@ -185,9 +176,8 @@ function resetEnemyBuffs(buffs: BuffStages): BuffStages {
   };
 }
 
-
 // ============================================================
-// ヒット順シミュレーション（期待値: 命中率・CRI率を考慮）
+// ヒット順シミュレーション
 // ============================================================
 
 function runHitOrderSimulation(config: SimulationConfig): {
@@ -210,13 +200,16 @@ function runHitOrderSimulation(config: SimulationConfig): {
   let currentBuffs: BuffStages = { ...config.initialBuffs };
   let isFullBreak = enemyStats.hasBarriers && (enemyStats.isFullBreak ?? false);
   let barriersRemaining = (enemyStats.hasBarriers && !isFullBreak) ? enemyStats.initialBarriers : 0;
+  let brokenBarrierCount = enemyStats.hasBarriers ? (enemyStats.initialBarriers - barriersRemaining) : 0;
 
   const hitSequence: SingleHitResult[] = [];
   let totalSimDamage = 0;
   let sequenceIndex = 0;
   const effectFiredSet = new Set<number>();
-  // 各バレットIDが既に結界を割ったかどうか（1バレットにつき最大1枚）
   const barrierBrokenSet = new Set<number>();
+
+  // 味方の異常枚数 (無効化を考慮)
+  const selfAilments = getAilmentStacks(selfStats.barriers, selfStats.ability.nullifyAilments);
 
   for (const group of hitOrder) {
     for (const bulletId of group) {
@@ -229,9 +222,37 @@ function runHitOrderSimulation(config: SimulationConfig): {
         hasSpecialAttackCapability(bullet.effects) &&
         (specialAttackActive[bulletId] ?? false);
 
-      const isFullBreakBefore = isFullBreak;
+      let nextBuffs = { ...currentBuffs };
+      let changes: BuffChange[] = [];
+      let currentHitIsFullBreak = isFullBreak;
 
-      // ダメージ計算（現在のフルブレイク状態を使用）
+      // 結界ブレイク判定 (ダメージ計算前に行う)
+      // 「有利」属性によるブレイク。1バレットにつき最大1枚。
+      let willBreakByAdvantage = false;
+      if (enemyStats.hasBarriers && !isFullBreak && advantage === '有利' && !barrierBrokenSet.has(bulletId)) {
+        willBreakByAdvantage = true;
+      }
+
+      // 現在の敵異常枚数を集計 (割る前の最新状態を取得)
+      const activeEnemyBarriers = (enemyStats.hasBarriers && !isFullBreak)
+        ? enemyStats.barriers.slice(brokenBarrierCount, enemyStats.initialBarriers)
+        : [];
+      const enemyAilments = getAilmentStacks(activeEnemyBarriers, []);
+
+      // ブレイク実行とFB判定
+      if (willBreakByAdvantage) {
+        barrierBrokenSet.add(bulletId);
+        barriersRemaining--;
+        brokenBarrierCount++;
+        if (barriersRemaining <= 0) {
+          barriersRemaining = 0;
+          isFullBreak = true;
+          currentHitIsFullBreak = true; // この1発からFBダメージを適用する
+          nextBuffs = resetEnemyBuffs(nextBuffs);
+        }
+      }
+
+      // ダメージ計算 (更新された currentHitIsFullBreak を使用)
       const expectedDamage = calcExpectedSingleHitDamage(
         bullet,
         selfStats,
@@ -242,27 +263,13 @@ function runHitOrderSimulation(config: SimulationConfig): {
         mustHit,
         specialAtk,
         damageBonus,
-        isFullBreakBefore,
+        currentHitIsFullBreak,
+        enemyAilments,
+        selfAilments,
       );
       totalSimDamage += expectedDamage;
 
-      let nextBuffs = { ...currentBuffs };
-      let changes: BuffChange[] = [];
-
-      // 結界ブレイク判定
-      if (enemyStats.hasBarriers && !isFullBreak && advantage === '有利' && !barrierBrokenSet.has(bulletId)) {
-        barrierBrokenSet.add(bulletId);
-        barriersRemaining--;
-        if (barriersRemaining <= 0) {
-          barriersRemaining = 0;
-          isFullBreak = true;
-          // フルブレイク発生：敵のバフデバフをリセット
-          nextBuffs = resetEnemyBuffs(nextBuffs);
-          // (リセットによる個別の変化ログは、ノイズになるため記録しない)
-        }
-      }
-
-      // バレットの追加効果適用（1回目のみ）
+      // バレットの追加効果適用 (1回目のみ)
       if (!effectFiredSet.has(bulletId)) {
         effectFiredSet.add(bulletId);
         const { nextBuffs: buffAfterEffects, changes: effectChanges } = applyBulletEffects(
@@ -284,8 +291,10 @@ function runHitOrderSimulation(config: SimulationConfig): {
         buffStateBefore: { ...currentBuffs },
         buffStateAfter: { ...nextBuffs },
         barriersRemaining,
-        isFullBreakBefore,
-        isFullBreak,
+        isFullBreakBefore: currentHitIsFullBreak, // 計算にFBが適用されたか
+        isFullBreak, // ヒット終了後のFB状態
+        enemyAilments,
+        selfAilments,
       });
 
       currentBuffs = nextBuffs;
@@ -297,7 +306,7 @@ function runHitOrderSimulation(config: SimulationConfig): {
 }
 
 // ============================================================
-// バレット単体静的ダメージ計算（弱点設定を使用）
+// バレット単体静的ダメージ計算
 // ============================================================
 
 function runStaticBulletCalculation(config: SimulationConfig): {
@@ -319,6 +328,12 @@ function runStaticBulletCalculation(config: SimulationConfig): {
   let totalStaticDamage = 0;
 
   const isInitialFullBreak = enemyStats.hasBarriers && (enemyStats.isFullBreak ?? false);
+  const selfAilments = getAilmentStacks(selfStats.barriers, selfStats.ability.nullifyAilments);
+  
+  // 静的計算では初期状態の異常枚数を使用
+  const enemyAilments = (enemyStats.hasBarriers && !isInitialFullBreak)
+    ? getAilmentStacks(enemyStats.barriers.slice(0, enemyStats.initialBarriers), [])
+    : { 燃焼: 0, 凍結: 0, 帯電: 0, 毒霧: 0, 暗闇: 0 };
 
   for (const bullet of bullets) {
     const mustHit = hasMustHit(bullet.effects);
@@ -338,6 +353,8 @@ function runStaticBulletCalculation(config: SimulationConfig): {
       specialAtk,
       damageBonus,
       isInitialFullBreak,
+      enemyAilments,
+      selfAilments,
     );
     totalStaticDamage += expectedDamage;
 
@@ -361,7 +378,6 @@ export function runSimulation(config: SimulationConfig): SimulationResult {
     runStaticBulletCalculation(config);
   const weightedMultipliers = calcWeightedMultipliers(config.bullets);
 
-  // hitSequence をバレットIDごとに集計して bulletSimResults を作成
   const simDamageMap = new Map<number, number>();
   const simAdvantageMap = new Map<number, ElementalAdvantage>();
 
@@ -370,7 +386,6 @@ export function runSimulation(config: SimulationConfig): SimulationResult {
       hit.bulletId,
       (simDamageMap.get(hit.bulletId) ?? 0) + hit.expectedDamage,
     );
-    // 便宜上、最後のヒットの属性相性を記録（通常、1バレット内で変わることはない）
     simAdvantageMap.set(hit.bulletId, hit.elementalAdvantage);
   }
 
@@ -392,8 +407,6 @@ export function runSimulation(config: SimulationConfig): SimulationResult {
 
 // ============================================================
 // ヒット順テキストパース
-// 形式: 1行1グループ、スペース区切りでバレットID
-// 例: "1\n1 2\n1\n1 3"
 // ============================================================
 
 export function parseHitOrder(text: string): HitOrder {

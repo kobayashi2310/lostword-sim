@@ -20,11 +20,23 @@ export default function SpecsPage() {
             クリティカル補正 × 各種補正
           </div>
           <ul className="list-disc pl-6 mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-300">
-            <li><strong>基本係数:</strong> 通常 100 / 少女転生時 140</li>
-            <li><strong>攻撃力:</strong> 基礎攻撃力 × バフ倍率 + (速力 × 速力バフ × 斬裂%) + (自身防御 × 防御バフ × 硬質%)</li>
-            <li><strong>防御力:</strong> 敵の基礎防御力 × 敵防御バフ倍率</li>
-            <li><strong>各種補正 (加算方式):</strong> 1 + (属性ダメージUP% + 弾種ダメージUP% + その他スキル補正%)
-              <p className="text-xs mt-1 text-gray-500 italic">例：絵札の「星属性50%UP」とスキルの「レーザー弾40%UP」がある場合、1 + (0.5 + 0.4) = 1.9倍となります。</p>
+            <li>
+              <strong>基本係数:</strong> 通常 100 / 少女転生時 140
+            </li>
+            <li>
+              <strong>攻撃力:</strong> 基礎攻撃力 × バフ倍率 + (速力 × 速力バフ
+              × 斬裂%) + (自身防御 × 防御バフ × 硬質%)
+            </li>
+            <li>
+              <strong>防御力:</strong> 敵の基礎防御力 × 敵防御バフ倍率
+            </li>
+            <li>
+              <strong>各種補正 (加算方式):</strong> 1 + (属性ダメージUP% +
+              弾種ダメージUP% + その他スキル補正%)
+              <p className="text-xs mt-1 text-gray-500 italic">
+                例：絵札の「星属性50%UP」とスキルの「レーザー弾40%UP」がある場合、1
+                + (0.5 + 0.4) = 1.9倍となります。
+              </p>
             </li>
           </ul>
         </section>
@@ -124,13 +136,80 @@ export default function SpecsPage() {
               </li>
               <li>
                 <strong>デバフリセット:</strong>{' '}
-                結界を割り切った瞬間に、それまで敵にかかっていた一部のバフ・デバフがリセットされます。
+                結界を割り切った瞬間に、それまで敵にかかっていた防御・回避・CRI関連のバフ・デバフがリセットされます。
               </li>
               <li>
                 <strong>最初からフルブレイク:</strong>{' '}
-                設定により、シミュレーション開始時点からこの状態を適用することも可能です（この場合、途中のリセットは発生しません）。
+                設定により、シミュレーション開始時点からこの状態を適用することも可能です。
               </li>
             </ul>
+          </div>
+        </section>
+
+        <section className="mb-10">
+          <h3 className="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-400">
+            6. 貫通弾
+          </h3>
+          <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300 border-l-4 border-purple-200 dark:border-purple-900 pl-4">
+            <p>
+              「貫通弾」属性を持つバレットは、バレット自体の特性として
+              <strong>敵の防御バフおよびデバフを一切無視</strong>
+              して計算されます。
+            </p>
+            <ul className="list-disc pl-6 space-y-1">
+              <li>
+                敵がどれだけ防御バフを積んでいても、基礎防御力（バフなし状態）としてダメージを与えます。
+              </li>
+              <li>
+                逆に、敵に防御デバフが入っていてもその恩恵は受けられません。
+              </li>
+              <li>フルブレイク中の恩恵は得られます。</li>
+              <li>
+                <strong>結界異常（燃焼・毒霧）による防御低下</strong>
+                は「防御デバフ」とは別枠の計算であるため、貫通弾であってもその恩恵を受けることができます。
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <section className="mb-10">
+          <h3 className="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-400">
+            7. 結界異常と能力
+          </h3>
+          <div className="space-y-6 text-sm text-gray-700 dark:text-gray-300">
+            <p>
+              結界に付与された異常状態は、攻防や命中率に直接的な影響を与えます。
+              これらはバフ段階とは<strong>別枠の乗算</strong>
+              として適用されます。
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                <h4 className="font-bold mb-2 text-orange-600">燃焼 / 毒霧</h4>
+                <p>1枚につき、対象の特定の攻防が 12.5% 低下します。</p>
+                <ul className="mt-2 text-xs space-y-1 list-disc pl-4">
+                  <li>燃焼: 陰攻・陰防が低下</li>
+                  <li>毒霧: 陽攻・陽防が低下</li>
+                  <li>計算: 基礎ステータス × 0.875 ^ 枚数</li>
+                </ul>
+              </div>
+              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                <h4 className="font-bold mb-2 text-blue-500">帯電 / 暗闇</h4>
+                <p>命中率に直接影響を与えます。</p>
+                <ul className="mt-2 text-xs space-y-1 list-disc pl-4">
+                  <li>帯電(敵): 命中率が 1.25 ^ 枚数 倍に向上</li>
+                  <li>暗闇(自): 命中率が 0.8 ^ 枚数 倍に低下</li>
+                </ul>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-bold mb-2 text-gray-800 dark:text-gray-200">
+                能力による無効化・変換
+              </h4>
+              <p>
+                キャラクターが特定の結界異常を「無効化」する場合、上記のデバフ効果は一切受けません。
+                また「バフに変換」する場合、デバフを無効化した上で、異常枚数をそのまま特定のバフ段階に加算します。
+              </p>
+            </div>
           </div>
         </section>
       </main>

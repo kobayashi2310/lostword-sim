@@ -1,4 +1,10 @@
-import type { BuffStages } from '@/types';
+import type {
+  BuffStages,
+  BarrierAilmentType,
+  AbilityConfig,
+  AbilityBuffPattern,
+  BarrierStatus,
+} from '@/types';
 
 // ============================================================
 // バフ倍率計算
@@ -46,17 +52,22 @@ export function getCritMultiplier(
 /**
  * 実効命中率を計算（0〜100 %）
  * 必中の場合は100%
+ * 結界異常補正: 帯電(敵) ×1.25^n, 暗闇(自) ×0.8^n
  */
 export function getEffectiveHitRate(
   baseHitRate: number,
   hitRateR1: number,
   hitRateR2: number,
   mustHit: boolean,
+  enemyParalyzeStacks: number = 0,
+  selfBlindStacks: number = 0,
 ): number {
   if (mustHit) return 100;
   const mult =
     getHitCriHitMultiplier(hitRateR1) * getHitCriHitMultiplier(hitRateR2);
-  return Math.min(baseHitRate * mult, 100);
+  const ailmentMult =
+    Math.pow(1.25, enemyParalyzeStacks) * Math.pow(0.8, selfBlindStacks);
+  return Math.min(baseHitRate * mult * ailmentMult, 100);
 }
 
 /**
@@ -76,6 +87,54 @@ export function getEffectiveCriRate(
 }
 
 // ============================================================
+// 結界異常と能力（バフ変換）のロジック
+// ============================================================
+
+/**
+ * 結界異常枚数を集計する（無効化設定を考慮）
+ */
+export function getAilmentStacks(
+  barriers: BarrierStatus[],
+  nullifyAilments: BarrierAilmentType[] = [],
+): Record<BarrierAilmentType, number> {
+  const counts: Record<BarrierAilmentType, number> = {
+    燃焼: 0,
+    凍結: 0,
+    帯電: 0,
+    毒霧: 0,
+    暗闇: 0,
+  };
+
+  barriers.forEach((b) => {
+    if (b.ailment && !nullifyAilments.includes(b.ailment)) {
+      counts[b.ailment]++;
+    }
+  });
+
+  return counts;
+}
+
+/**
+ * 能力によるバフ上昇段階を計算する
+ */
+export function getAbilityBuffBonus(
+  ailments: Record<BarrierAilmentType, number>,
+  ability: AbilityConfig,
+): Record<AbilityBuffPattern, number> {
+  const bonuses: Record<AbilityBuffPattern, number> = {
+    '速力・命中・回避': 0,
+    '陽攻・陰攻・CRI攻撃・CRI命中': 0,
+    '陽防・陰防・CRI防御・CRI回避': 0,
+  };
+
+  ability.convertAilments.forEach(({ ailment, pattern }) => {
+    bonuses[pattern] += ailments[ailment] || 0;
+  });
+
+  return bonuses;
+}
+
+// ============================================================
 // バフ段階のクランプ
 // ============================================================
 
@@ -91,10 +150,6 @@ export function clampR2(value: number): number {
 // バフ段階への追加効果適用
 // ============================================================
 
-/**
- * 自身バフ追加効果をバフ段階に反映する。
- * Rank1の各バフに対応するフィールドに加算し、上限でクランプする。
- */
 export function applySelfBuff(
   buffs: BuffStages,
   buffType: string,
@@ -129,10 +184,6 @@ export function applySelfBuff(
   return next;
 }
 
-/**
- * 対象デバフ追加効果をバフ段階に反映する。
- * デバフは段階を負方向（または指定段階分）加算する。
- */
 export function applyEnemyDebuff(
   buffs: BuffStages,
   debuffType: string,
@@ -147,7 +198,6 @@ export function applyEnemyDebuff(
       next.enemyYinDefR1 = clampR1(next.enemyYinDefR1 - stages);
       break;
     case '対象CRI防御低下':
-      // デバフなので enemyCriDefR1 を減らす（負方向 = プレイヤーのCRI強化）
       next.enemyCriDefR1 = clampR1(next.enemyCriDefR1 - stages);
       break;
     case '対象CRI回避低下':
@@ -156,7 +206,6 @@ export function applyEnemyDebuff(
     case '対象回避低下':
       next.enemyEvasionR1 = clampR1(next.enemyEvasionR1 - stages);
       break;
-    // 敵によるプレイヤーへのデバフ（もしあれば）
     case '対象陽攻低下':
       next.yangAttackR1 = clampR1(next.yangAttackR1 - stages);
       break;
@@ -206,7 +255,7 @@ export function createDefaultBuffStages(): BuffStages {
 }
 
 // ============================================================
-// バフ段階バリデーション
+// バリエーション規則
 // ============================================================
 
 interface BuffValidationError {
@@ -218,36 +267,25 @@ interface BuffValidationError {
 
 export function validateBuffStages(buffs: BuffStages): BuffValidationError[] {
   const errors: BuffValidationError[] = [];
-
   const check = (value: number, field: string, min: number, max: number) => {
     if (!Number.isFinite(value) || value < min || value > max) {
       errors.push({ field, value, min, max });
     }
   };
-
-  // 攻撃バフ（-10〜+10 / R2: 0〜+10）
   check(buffs.yangAttackR1, '陽攻R1', -10, 10);
   check(buffs.yangAttackR2, '陽攻R2', 0, 10);
   check(buffs.yinAttackR1, '陰攻R1', -10, 10);
   check(buffs.yinAttackR2, '陰攻R2', 0, 10);
-
-  // 速力バフ（-10〜+10 / R2: 0〜+10）
   check(buffs.speedR1, '速力R1', -10, 10);
   check(buffs.speedR2, '速力R2', 0, 10);
-
-  // 自身防御バフ（-10〜+10 / R2: 0〜+10）
   check(buffs.selfYangDefR1, '自身陽防R1', -10, 10);
   check(buffs.selfYangDefR2, '自身陽防R2', 0, 10);
   check(buffs.selfYinDefR1, '自身陰防R1', -10, 10);
   check(buffs.selfYinDefR2, '自身陰防R2', 0, 10);
-
-  // 敵防御バフ/デバフ（-10〜+10 / R2: 0〜+10）
   check(buffs.enemyYangDefR1, '敵陽防R1', -10, 10);
   check(buffs.enemyYangDefR2, '敵陽防R2', 0, 10);
   check(buffs.enemyYinDefR1, '敵陰防R1', -10, 10);
   check(buffs.enemyYinDefR2, '敵陰防R2', 0, 10);
-
-  // 命中/CRI系（R1: -10〜+10 / R2: 0〜+10）
   check(buffs.selfHitR1, '命中R1', -10, 10);
   check(buffs.selfHitR2, '命中R2', 0, 10);
   check(buffs.selfCriAttackR1, '自身CRI攻撃R1', -10, 10);
@@ -258,7 +296,6 @@ export function validateBuffStages(buffs: BuffStages): BuffValidationError[] {
   check(buffs.enemyEvasionR2, '敵回避R2', 0, 10);
   check(buffs.enemyCriDefR1, '敵CRI防御R1', -10, 10);
   check(buffs.enemyCriEvasionR1, '敵CRI回避R1', -10, 10);
-
   return errors;
 }
 

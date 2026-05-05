@@ -11,8 +11,10 @@
 | `getAtkDefSpdMultiplier` | `stages: number` | `number` (倍率) | 攻撃/防御/速力バフの倍率計算。+n段階で(1 + 0.3×n)倍、-n段階で1/(1 + 0.3×|n|)倍。 |
 | `getHitCriHitMultiplier` | `stages: number` | `number` (倍率) | 命中/CRI命中バフの倍率計算。+n段階で(1 + 0.2×n)倍、-n段階で1/(1 + 0.2×|n|)倍。 |
 | `getCritMultiplier` | `r1: number, r2: number` | `number` (倍率) | CRIダメージの最終倍率を計算。R1が負の場合は1/(1 + 0.3×|n|)の減衰を適用。 |
-| `getEffectiveHitRate` | `base, r1, r2, mustHit` | `number` (0-100) | バフと必中フラグを考慮した実効命中率。負の段階は命中率低下として作用。 |
+| `getEffectiveHitRate` | `base, r1, r2, mustHit, ...` | `number` (0-100) | バフ、必中フラグ、および結界異常（帯電・暗闇）を考慮した実効命中率。 |
 | `getEffectiveCriRate` | `base, r1, r2, special` | `number` (0-100) | バフと特効フラグを考慮した実効CRI命中率。負の段階はCRI率低下として作用。 |
+| `getAilmentStacks` | `barriers, nullifyList` | `Record<Type, number>` | 結界から異常枚数を集計。能力による無効化設定を反映。 |
+| `getAbilityBuffBonus` | `ailments, ability` | `Record<Pattern, number>` | 結界異常から能力によるバフ変換値を計算。 |
 | `applySelfBuff` | `buffs, type, stages` | `BuffStages` | 指定した自身バフを現在のバフ段階に加算・クランプして返す。R1は -10〜10 の範囲。 |
 | `applyEnemyDebuff` | `buffs, type, stages` | `BuffStages` | 指定した敵デバフを適用して返す。バレットの追加効果としてバフ段階を増減させる。 |
 | `validateBuffStages` | `buffs` | `Error[]` | バフ段階が許容範囲内（R1: -10〜+10, R2: 0〜+10）にあるかチェックする。 |
@@ -23,10 +25,10 @@
 
 | 関数名 | 引数 | 戻り値 | 処理内容 |
 | :--- | :--- | :--- | :--- |
-| `calcAttackPower` | `self, buffs, bullet` | `number` | バレットの陰陽に応じた基礎攻撃力に、速力(斬裂)・防御(硬質)の補正を加算した値を計算。 |
-| `calcEnemyDefense` | `enemy, buffs, bullet` | `number` | 敵の基礎防御力にバフ/デバフ倍率を適用した値を計算。 |
-| `calcSingleHitDamage` | `bullet, self, enemy, buffs, ...` | `number` (整数) | バレット1発分のダメージ。威力、攻防比、属性相性、CRI、各種補正を乗算し切り捨て。 |
-| `calcExpectedSingleHitDamage` | `bullet, self, enemy, buffs, ...` | `number` (整数) | CRI/非CRIの期待値を命中率で補正した1発あたりの期待値ダメージ。 |
+| `calcAttackPower` | `self, buffs, bullet, selfAilments` | `number` | 基礎攻撃力に速力/防御補正、および結界異常（燃焼/毒霧）の影響を適用。 |
+| `calcEnemyDefense` | `enemy, buffs, bullet, enemyAilments, isFB` | `number` | 敵の基礎防御力にバフ、結界異常、およびフルブレイク/貫通弾の影響を適用。 |
+| `calcSingleHitDamage` | `bullet, self, enemy, buffs, ...` | `number` (整数) | バレット1発分のダメージ。威力、攻防比、属性相性、CRI、各種補正、結界異常を乗算。 |
+| `calcExpectedSingleHitDamage` | `bullet, self, enemy, buffs, ...` | `number` (整数) | CRI/非CRIの期待値を命中率（結界異常込み）で補正した期待値。 |
 | `calcStageTotalExpected` | `bullet, self, enemy, buffs, ...` | `number` (整数) | バレット1段分の全弾合計期待値ダメージ。 |
 
 ## 3. simulation.ts (シミュレーション実行)

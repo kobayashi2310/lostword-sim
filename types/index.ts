@@ -29,6 +29,40 @@ export type BulletKind =
 export type ElementalAdvantage = '有利' | '等倍' | '不利';
 
 // ============================================================
+// 結界異常
+// ============================================================
+
+export type BarrierAilmentType = '燃焼' | '凍結' | '帯電' | '毒霧' | '暗闇';
+
+export interface BarrierStatus {
+  ailment: BarrierAilmentType | null;
+}
+
+// 敵は最大7枚、味方は最大5枚
+export type EnemyBarriers = [
+  BarrierStatus,
+  BarrierStatus,
+  BarrierStatus,
+  BarrierStatus,
+  BarrierStatus,
+  BarrierStatus,
+  BarrierStatus,
+];
+export type SelfBarriers = [
+  BarrierStatus,
+  BarrierStatus,
+  BarrierStatus,
+  BarrierStatus,
+  BarrierStatus,
+];
+
+export function createEmptyBarriers<T extends number>(
+  count: T,
+): T extends 7 ? EnemyBarriers : SelfBarriers {
+  return Array.from({ length: count }, () => ({ ailment: null })) as any;
+}
+
+// ============================================================
 // 追加効果
 // ============================================================
 
@@ -48,7 +82,8 @@ export type EnemyDebuffEffectType =
   | '対象陽防低下'
   | '対象陰防低下'
   | '対象CRI防御低下'
-  | '対象CRI回避低下';
+  | '対象CRI回避低下'
+  | '対象回避低下';
 
 export interface EffectMustHit {
   readonly kind: '必中';
@@ -93,7 +128,34 @@ export interface Bullet {
   criRate: number; // 0–100 (%)
   slashPercent: number; // 斬裂弾% (0=なし)
   hardPercent: number; // 硬質弾% (0=なし)
+  isPenetration: boolean; // 貫通弾
   effects: BulletEffect[];
+}
+
+// ============================================================
+// 味方の能力 (Ability)
+// ============================================================
+
+export type AbilityBuffPattern =
+  | '速力・命中・回避'
+  | '陽攻・陰攻・CRI攻撃・CRI命中'
+  | '陽防・陰防・CRI防御・CRI回避';
+
+export interface AbilityConfig {
+  // 結界異常をバフに変換する設定
+  convertAilments: {
+    ailment: BarrierAilmentType;
+    pattern: AbilityBuffPattern;
+  }[];
+  // 結界異常を無効化する設定
+  nullifyAilments: BarrierAilmentType[];
+}
+
+export function createDefaultAbilityConfig(): AbilityConfig {
+  return {
+    convertAilments: [],
+    nullifyAilments: [],
+  };
 }
 
 // ============================================================
@@ -104,16 +166,20 @@ export interface SelfStats {
   yangAttack: number; // 陽攻
   yinAttack: number; // 陰攻
   speed: number; // 速力
-  yangDefense: number; // 陽防（硬質弾の攻撃力加算に使用）
-  yinDefense: number; // 陰防（硬質弾の攻撃力加算に使用）
+  yangDefense: number; // 陽防
+  yinDefense: number; // 陰防
+  barriers: SelfBarriers;
+  ability: AbilityConfig;
 }
 
 export interface EnemyStats {
-  yangDefense: number; // 陽防（陽気弾の防御割り算に使用）
-  yinDefense: number; // 陰防（陰気弾の防御割り算に使用）
+  yangDefense: number; // 陽防
+  yinDefense: number; // 陰防
   hasBarriers: boolean;
   initialBarriers: number; // 1-7
   isFullBreak: boolean; // 最初からフルブレイク状態か
+  barriers: EnemyBarriers;
+  ability: AbilityConfig;
 }
 
 // ============================================================
@@ -150,12 +216,12 @@ export interface BuffStages {
   enemyYangDefR2: number;
   enemyYinDefR1: number;
   enemyYinDefR2: number;
-  // 敵回避バフ/デバフ（正=回避アップ=命中率低下、負=回避ダウン=命中率アップ）
+  // 敵回避バフ/デバフ
   enemyEvasionR1: number; // -10〜10
   enemyEvasionR2: number;
-  // 敵CRI防御バフ/デバフ（正=バフ=プレイヤーのCRI減衰、負=デバフ=CRI強化）
+  // 敵CRI防御バフ/デバフ
   enemyCriDefR1: number;      // -10〜10
-  // 敵CRI回避バフ/デバフ（正=バフ=命中率低下、負=デバフ=命中率強化）
+  // 敵CRI回避バフ/デバフ
   enemyCriEvasionR1: number;  // -10〜10
 }
 
@@ -168,9 +234,6 @@ export function combinedHitRateR2(b: BuffStages): number {
   return Math.max(0, Math.min(10, b.selfHitR2 - b.enemyEvasionR2));
 }
 // combined CRI攻撃 R1 = clamp(自身R1 − 敵CRI防御R1, -10, 10)
-// 例: 自身6段 − 敵+3バフ = 3段
-// 例: 自身3段 − 敵-5デバフ = 8段
-// 例: 自身6段 − 敵+10バフ = -4段
 export function combinedCriAttackR1(b: BuffStages): number {
   return Math.max(-10, Math.min(10, b.selfCriAttackR1 - b.enemyCriDefR1));
 }
@@ -183,12 +246,11 @@ export function combinedCriHitR1(b: BuffStages): number {
 // ヒット順
 // ============================================================
 
-export type HitGroup = number[]; // 1-based バレットID の配列（グループ内発射順）
+export type HitGroup = number[]; // 1-based バレットID の配列
 export type HitOrder = HitGroup[];
 
 // ============================================================
 // 敵属性弱点設定
-// 無属性は常に等倍固定なので設定対象外
 // ============================================================
 
 export type ElementalElement = Exclude<Element, '無'>;
@@ -225,30 +287,28 @@ export function createDefaultWeakness(): EnemyWeaknessConfig {
 
 // ============================================================
 // 蓄力（特殊バフ）
-// 蓄力同士は加算。合計倍率をダメージ計算式内で × (1 + totalChargeMult) として適用
 // ============================================================
 
-export interface ChargeSpirit {   // 蓄力[霊力]
+export interface ChargeSpirit {
   kind: '霊力';
-  ratePerStack: number; // 整数 %、0以上（例: 100 = 100%/スタック）
-  stacks: number;       // 0〜5
+  ratePerStack: number;
+  stacks: number;
 }
 
-export interface ChargeBarrier {  // 蓄力[結界]
+export interface ChargeBarrier {
   kind: '結界';
-  ratePerStack: number; // 整数 %、0以上
-  stacks: number;       // 0〜5
+  ratePerStack: number;
+  stacks: number;
 }
 
-export interface ChargeHP {       // 蓄力[体力]
+export interface ChargeHP {
   kind: '体力';
-  maxRate: number;    // 最大倍率 整数 %、0以上（HP100%時の蓄力倍率）
-  hpPercent: number;  // 現在の体力 整数 1〜100 (%)
+  maxRate: number;
+  hpPercent: number;
 }
 
 export type ChargeEffect = ChargeSpirit | ChargeBarrier | ChargeHP;
 
-/** 蓄力合計倍率（小数）を計算。加算方式。 */
 export function calcTotalChargeMult(effects: ChargeEffect[]): number {
   return effects.reduce((sum, e) => {
     if (e.kind === '霊力' || e.kind === '結界') {
@@ -258,13 +318,12 @@ export function calcTotalChargeMult(effects: ChargeEffect[]): number {
   }, 0);
 }
 
-// 補正値設定
 export interface DamageBonus {
   elementBonus: Partial<Record<Element, number>>;
   bulletKindBonus: Partial<Record<BulletKind, number>>;
   advantageBonus: number;
   disadvantageBonus: number;
-  chargeEffects: ChargeEffect[]; // 蓄力リスト
+  chargeEffects: ChargeEffect[];
 }
 
 export function createDefaultDamageBonus(): DamageBonus {
@@ -306,13 +365,16 @@ export interface SingleHitResult {
   elementalAdvantage: ElementalAdvantage;
   mustHit: boolean;
   specialAttack: boolean;
-  expectedDamage: number; // 期待値ダメージ（命中率・CRI率を考慮）
+  expectedDamage: number;
   buffChanges: BuffChange[];
   buffStateBefore: BuffStages;
   buffStateAfter: BuffStages;
   barriersRemaining: number;
   isFullBreakBefore: boolean;
   isFullBreak: boolean;
+  // 追加: 結界異常枚数
+  enemyAilments: Record<BarrierAilmentType, number>;
+  selfAilments: Record<BarrierAilmentType, number>;
 }
 
 export interface BulletStaticResult {
@@ -327,18 +389,11 @@ export interface WeightedMultipliers {
 }
 
 export interface SimulationResult {
-  // ヒット順シミュレーション期待値
   hitSequence: SingleHitResult[];
   totalSimDamage: number;
-
-  // バレット別シミュレーション期待値 (ヒット順の結果を集計したもの)
   bulletSimResults: BulletStaticResult[];
-
-  // バレット別静的期待値 (初期バフ固定)
   bulletStaticResults: BulletStaticResult[];
   totalStaticDamage: number;
-
-  // 加重平均硬斬倍率
   weightedMultipliers: WeightedMultipliers;
 }
 
@@ -393,4 +448,5 @@ export const ENEMY_DEBUFF_EFFECT_TYPES: EnemyDebuffEffectType[] = [
   '対象陰防低下',
   '対象CRI防御低下',
   '対象CRI回避低下',
+  '対象回避低下',
 ];

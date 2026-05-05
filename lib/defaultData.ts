@@ -1,14 +1,23 @@
 import type { Bullet, EnemyStats, HitOrder, SelfStats } from '@/types';
 import { createDefaultBuffStages } from './buffs';
 import { serializeHitOrder } from './simulation';
+import { createEmptyBarriers, createDefaultAbilityConfig } from '@/types';
 
 // 仕様書サンプルデータ
 export const DEFAULT_SELF_STATS: SelfStats = {
   yangAttack: 2000,
   yinAttack: 1350,
   speed: 1650,
-  yangDefense: 0,
-  yinDefense: 0,
+  yangDefense: 1000,
+  yinDefense: 1000,
+  barriers: createEmptyBarriers(5),
+  ability: {
+    convertAilments: [
+      { ailment: '凍結', pattern: '速力・命中・回避' },
+      { ailment: '帯電', pattern: '速力・命中・回避' },
+    ],
+    nullifyAilments: ['毒霧', '暗闇'],
+  },
 };
 
 export const DEFAULT_ENEMY_STATS: EnemyStats = {
@@ -17,6 +26,8 @@ export const DEFAULT_ENEMY_STATS: EnemyStats = {
   hasBarriers: true,
   initialBarriers: 5,
   isFullBreak: false,
+  barriers: createEmptyBarriers(7),
+  ability: createDefaultAbilityConfig(),
 };
 
 export const DEFAULT_BUFF_STAGES = createDefaultBuffStages();
@@ -33,6 +44,7 @@ export const DEFAULT_BULLETS: Bullet[] = [
     criRate: 15,
     slashPercent: 160,
     hardPercent: 0,
+    isPenetration: false,
     effects: [
       { kind: '必中' },
       { kind: '特効' },
@@ -61,6 +73,7 @@ export const DEFAULT_BULLETS: Bullet[] = [
     criRate: 15,
     slashPercent: 120,
     hardPercent: 0,
+    isPenetration: false,
     effects: [{ kind: '必中' }],
   },
   {
@@ -74,6 +87,7 @@ export const DEFAULT_BULLETS: Bullet[] = [
     criRate: 15,
     slashPercent: 0,
     hardPercent: 0,
+    isPenetration: false,
     effects: [],
   },
   {
@@ -87,6 +101,7 @@ export const DEFAULT_BULLETS: Bullet[] = [
     criRate: 15,
     slashPercent: 120,
     hardPercent: 0,
+    isPenetration: false,
     effects: [
       { kind: '特効' },
       {
@@ -108,6 +123,7 @@ export const DEFAULT_BULLETS: Bullet[] = [
     criRate: 15,
     slashPercent: 0,
     hardPercent: 0,
+    isPenetration: false,
     effects: [],
   },
   {
@@ -121,6 +137,7 @@ export const DEFAULT_BULLETS: Bullet[] = [
     criRate: 15,
     slashPercent: 160,
     hardPercent: 0,
+    isPenetration: false,
     effects: [
       { kind: '必中' },
       { kind: '特効' },

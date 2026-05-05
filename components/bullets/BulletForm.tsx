@@ -67,6 +67,11 @@ export default function BulletForm({ bullet, onChange }: Props) {
             硬質{bullet.hardPercent}%
           </span>
         )}
+        {bullet.isPenetration && (
+          <span className="text-xs text-purple-600 dark:text-purple-400">
+            貫通
+          </span>
+        )}
         {bullet.effects.some((e) => e.kind === '必中') && (
           <span className="text-xs text-green-600 dark:text-green-400">
             必中
@@ -167,7 +172,7 @@ export default function BulletForm({ bullet, onChange }: Props) {
             </div>
           </div>
 
-          {/* 命中率・CRI命中率 */}
+          {/* 命中率・CRI命中率・貫通 */}
           <div className="flex flex-wrap gap-3 items-center">
             <div className="flex items-center gap-1">
               <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -196,6 +201,19 @@ export default function BulletForm({ bullet, onChange }: Props) {
                 className={`w-16 ${numInputCls}`}
               />
               <span className="text-xs text-gray-400">%</span>
+            </div>
+            <div className="flex items-center gap-3 ml-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={bullet.isPenetration}
+                  onChange={(e) => set('isPenetration')(e.target.checked)}
+                  className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                />
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  貫通弾
+                </span>
+              </label>
             </div>
           </div>
 

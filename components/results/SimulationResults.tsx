@@ -128,6 +128,11 @@ function StaticTable({
                       {bullet.hardPercent > 0 && ` 硬${bullet.hardPercent}%`}]
                     </span>
                   )}
+                  {bullet?.isPenetration && (
+                    <span className="ml-1 text-purple-600 dark:text-purple-400">
+                      貫通
+                    </span>
+                  )}
                   {mustHit && (
                     <span className="ml-1 text-green-600 dark:text-green-400">
                       必中
@@ -250,11 +255,16 @@ function SimulationTable({
             const eDef = isYang
               ? b.enemyYangDefR1 + b.enemyYangDefR2
               : b.enemyYinDefR1 + b.enemyYinDefR2;
-            const eDefDisplay = hit.isFullBreakBefore
-              ? 'FB'
-              : eDef > 0
-                ? `+${eDef}`
-                : eDef;
+            
+            // 防御表示のロジック
+            let eDefDisplay: string;
+            if (hit.isFullBreakBefore) {
+              eDefDisplay = 'FB';
+            } else if (bullet?.isPenetration) {
+              eDefDisplay = '貫通';
+            } else {
+              eDefDisplay = eDef > 0 ? `+${eDef}` : String(eDef);
+            }
 
             return (
               <tr
@@ -274,14 +284,19 @@ function SimulationTable({
                   className={`${tdBase} text-gray-700 dark:text-white font-mono`}
                 >
                   {hit.bulletId}
+                  {bullet?.isPenetration && (
+                    <span className="text-purple-600 dark:text-purple-400 ml-1" title="貫通弾">
+                      貫
+                    </span>
+                  )}
                   {hit.mustHit && (
                     <span className="text-green-600 dark:text-green-400 ml-1">
-                      必中
+                      必
                     </span>
                   )}
                   {hit.specialAttack && (
                     <span className="text-red-500 dark:text-red-300 ml-1">
-                      特効
+                      特
                     </span>
                   )}
                 </td>
@@ -330,10 +345,10 @@ function SimulationTable({
                   </div>
 
                   {openDetailIndex === idx && (
-                    <div className="absolute z-50 right-full top-0 mr-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-3 animate-in fade-in zoom-in duration-100">
+                    <div className="absolute z-50 right-full top-0 mr-2 w-52 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-3 animate-in fade-in zoom-in duration-100">
                       <div className="flex justify-between items-center mb-2 border-b border-gray-100 dark:border-gray-700 pb-1">
                         <span className="font-semibold text-[11px] text-gray-600 dark:text-gray-300">
-                          バフ詳細 (Hit {hit.sequenceIndex + 1})
+                          詳細状態 (Hit {hit.sequenceIndex + 1})
                         </span>
                         <button
                           onClick={() => setOpenDetailIndex(null)}
@@ -342,57 +357,67 @@ function SimulationTable({
                           ×
                         </button>
                       </div>
-                      <div className="grid grid-cols-1 gap-y-1 max-h-60 overflow-y-auto">
-                        {hit.isFullBreakBefore && (
-                          <div className="text-[10px] text-red-500 font-bold border-b border-red-100 dark:border-red-900/30 mb-1 pb-1">
-                            フルブレイク適用中
-                          </div>
-                        )}
-                        {!hit.isFullBreakBefore && hit.isFullBreak && (
-                          <div className="text-[10px] text-orange-500 font-bold border-b border-orange-100 dark:border-orange-900/30 mb-1 pb-1">
-                            このヒットでFB発生
-                          </div>
-                        )}
-                        {Object.entries(hit.buffStateBefore)
-                          .filter(([key, val]) => {
-                            if (val === 0) return false;
-                            // FB中は通常の防御デバフは計算に関係ないので非表示にする
-                            if (hit.isFullBreakBefore) {
-                              if (
-                                [
-                                  'enemyYangDefR1',
-                                  'enemyYangDefR2',
-                                  'enemyYinDefR1',
-                                  'enemyYinDefR2',
-                                ].includes(key)
-                              ) {
-                                return false;
-                              }
-                            }
-                            return true;
-                          })
-                          .map(([key, val]) => (
-                            <div
-                              key={key}
-                              className="flex justify-between text-[10px]"
-                            >
-                              <span className="text-gray-500 dark:text-gray-400">
-                                {getBuffLabel(key)}
-                              </span>
-                              <span
-                                className={`font-mono font-medium ${val > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}
-                              >
-                                {val > 0 ? `+${val}` : val}
-                              </span>
+                      <div className="grid grid-cols-1 gap-y-1.5 max-h-80 overflow-y-auto">
+                        {/* 状態フラグ */}
+                        <div className="flex flex-wrap gap-1 mb-1">
+                          {hit.isFullBreakBefore && (
+                            <span className="px-1 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 text-[9px] rounded font-bold">フルブレイク中</span>
+                          )}
+                          {bullet?.isPenetration && (
+                            <span className="px-1 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-[9px] rounded font-bold">貫通弾</span>
+                          )}
+                        </div>
+
+                        {/* 結界異常 */}
+                        <div className="space-y-1 bg-gray-50 dark:bg-gray-900/40 p-1.5 rounded">
+                          <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">結界異常枚数</div>
+                          <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px]">
+                            <div className="space-y-0.5">
+                              <div className="text-gray-500">【敵】</div>
+                              {Object.entries(hit.enemyAilments).map(([a, n]) => (
+                                n > 0 && <div key={a} className="flex justify-between"><span>{a}</span><span className="font-mono text-blue-500">{n}枚</span></div>
+                              ))}
+                              {Object.values(hit.enemyAilments).every(n => n === 0) && <div className="text-gray-400 italic">なし</div>}
                             </div>
-                          ))}
-                        {Object.values(hit.buffStateBefore).every(
-                          (v) => v === 0,
-                        ) && (
-                          <div className="text-[10px] text-gray-400 italic">
-                            変動なし
+                            <div className="space-y-0.5 border-l border-gray-200 dark:border-gray-700 pl-2">
+                              <div className="text-gray-500">【自】</div>
+                              {Object.entries(hit.selfAilments).map(([a, n]) => (
+                                n > 0 && <div key={a} className="flex justify-between"><span>{a}</span><span className="font-mono text-blue-500">{n}枚</span></div>
+                              ))}
+                              {Object.values(hit.selfAilments).every(n => n === 0) && <div className="text-gray-400 italic">なし</div>}
+                            </div>
                           </div>
-                        )}
+                        </div>
+
+                        {/* バフ段階 */}
+                        <div className="space-y-1">
+                          <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">バフ段階 (Rank1/2)</div>
+                          {Object.entries(hit.buffStateBefore)
+                            .filter(([key, val]) => {
+                              if (val === 0) return false;
+                              if (hit.isFullBreakBefore || bullet?.isPenetration) {
+                                if (['enemyYangDefR1', 'enemyYangDefR2', 'enemyYinDefR1', 'enemyYinDefR2'].includes(key)) {
+                                  return false;
+                                }
+                              }
+                              return true;
+                            })
+                            .map(([key, val]) => (
+                              <div
+                                key={key}
+                                className="flex justify-between text-[10px]"
+                              >
+                                <span className="text-gray-500 dark:text-gray-400">
+                                  {getBuffLabel(key)}
+                                </span>
+                                <span
+                                  className={`font-mono font-medium ${val > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}
+                                >
+                                  {val > 0 ? `+${val}` : val}
+                                </span>
+                              </div>
+                            ))}
+                        </div>
                       </div>
                     </div>
                   )}

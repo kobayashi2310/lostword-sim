@@ -9,6 +9,9 @@ import type {
   SimulationResult,
   SingleHitResult,
   BarrierAilmentType,
+  ElementalAdvantage,
+  EffectBreak,
+  BreakEffectType,
 } from '@/types';
 import { getAdvantageForBullet } from '@/types';
 import { applySelfBuff, applyEnemyDebuff, getAilmentStacks } from './buffs';
@@ -26,6 +29,24 @@ function hasMustHit(effects: BulletEffect[]): boolean {
 /** バレットが特効能力を持つか */
 export function hasSpecialAttackCapability(effects: BulletEffect[]): boolean {
   return effects.some((e) => e.kind === '特効');
+}
+
+/** ブレイク対象の異常型を取得 */
+function getBreakTargetAilment(
+  effects: BulletEffect[],
+): BarrierAilmentType | null {
+  const breakEffect = effects.find((e) => e.kind === 'ブレイク') as
+    | EffectBreak
+    | undefined;
+  if (!breakEffect) return null;
+  const mapping: Record<BreakEffectType, BarrierAilmentType> = {
+    過毒: '毒霧',
+    焼却: '燃焼',
+    氷解: '凍結',
+    放電: '帯電',
+    閃光: '暗闇',
+  };
+  return mapping[breakEffect.breakType];
 }
 
 // ============================================================
@@ -122,7 +143,12 @@ function applyBulletEffects(
   let current = { ...buffs };
 
   for (const effect of effects) {
-    if (effect.kind === '必中' || effect.kind === '特効') continue;
+    if (
+      effect.kind === '必中' ||
+      effect.kind === '特効' ||
+      effect.kind === 'ブレイク'
+    )
+      continue;
 
     if (effect.kind === '自身バフ') {
       const before = { ...current };
@@ -199,8 +225,11 @@ function runHitOrderSimulation(config: SimulationConfig): {
 
   let currentBuffs: BuffStages = { ...config.initialBuffs };
   let isFullBreak = enemyStats.hasBarriers && (enemyStats.isFullBreak ?? false);
-  let barriersRemaining = (enemyStats.hasBarriers && !isFullBreak) ? enemyStats.initialBarriers : 0;
-  let brokenBarrierCount = enemyStats.hasBarriers ? (enemyStats.initialBarriers - barriersRemaining) : 0;
+  let barriersRemaining =
+    enemyStats.hasBarriers && !isFullBreak ? enemyStats.initialBarriers : 0;
+  let brokenBarrierCount = enemyStats.hasBarriers
+    ? enemyStats.initialBarriers - barriersRemaining
+    : 0;
 
   const hitSequence: SingleHitResult[] = [];
   let totalSimDamage = 0;
@@ -209,7 +238,10 @@ function runHitOrderSimulation(config: SimulationConfig): {
   const barrierBrokenSet = new Set<number>();
 
   // 味方の異常枚数 (無効化を考慮)
-  const selfAilments = getAilmentStacks(selfStats.barriers, selfStats.ability.nullifyAilments);
+  const selfAilments = getAilmentStacks(
+    selfStats.barriers,
+    selfStats.ability.nullifyAilments,
+  );
 
   for (const group of hitOrder) {
     for (const bulletId of group) {
@@ -223,36 +255,63 @@ function runHitOrderSimulation(config: SimulationConfig): {
         (specialAttackActive[bulletId] ?? false);
 
       let nextBuffs = { ...currentBuffs };
-      let changes: BuffChange[] = [];
-      let currentHitIsFullBreak = isFullBreak;
+      const changes: BuffChange[] = [];
 
-      // 結界ブレイク判定 (ダメージ計算前に行う)
-      // 「有利」属性によるブレイク。1バレットにつき最大1枚。
-      let willBreakByAdvantage = false;
-      if (enemyStats.hasBarriers && !isFullBreak && advantage === '有利' && !barrierBrokenSet.has(bulletId)) {
-        willBreakByAdvantage = true;
+      // 1. ブレイク判定 (ダメージ計算前に行う)
+      const breakTargetAilment = getBreakTargetAilment(bullet.effects);
+      let brokenThisBullet = 0;
+
+      // 1-a. ブレイク弾による複数枚ブレイク
+      if (enemyStats.hasBarriers && !isFullBreak && breakTargetAilment) {
+        const activeBarriers = enemyStats.barriers.slice(
+          brokenBarrierCount,
+          enemyStats.initialBarriers,
+        );
+        for (const b of activeBarriers) {
+          if (b.ailment === breakTargetAilment) {
+            brokenThisBullet++;
+          }
+        }
       }
 
-      // 現在の敵異常枚数を集計 (割る前の最新状態を取得)
-      const activeEnemyBarriers = (enemyStats.hasBarriers && !isFullBreak)
-        ? enemyStats.barriers.slice(brokenBarrierCount, enemyStats.initialBarriers)
-        : [];
-      const enemyAilments = getAilmentStacks(activeEnemyBarriers, []);
+      // 1-b. 属性有利によるブレイク (1バレットにつき最大1枚)
+      let willBreakByAdvantage = false;
+      if (
+        enemyStats.hasBarriers &&
+        !isFullBreak &&
+        advantage === '有利' &&
+        !barrierBrokenSet.has(bulletId)
+      ) {
+        if (barriersRemaining - brokenThisBullet > 0) {
+          willBreakByAdvantage = true;
+        }
+      }
 
-      // ブレイク実行とFB判定
-      if (willBreakByAdvantage) {
-        barrierBrokenSet.add(bulletId);
-        barriersRemaining--;
-        brokenBarrierCount++;
+      // ブレイク実行
+      const totalBrokenNow = brokenThisBullet + (willBreakByAdvantage ? 1 : 0);
+      if (totalBrokenNow > 0) {
+        barriersRemaining -= totalBrokenNow;
+        brokenBarrierCount += totalBrokenNow;
+        if (willBreakByAdvantage) barrierBrokenSet.add(bulletId);
+
         if (barriersRemaining <= 0) {
           barriersRemaining = 0;
           isFullBreak = true;
-          currentHitIsFullBreak = true; // この1発からFBダメージを適用する
           nextBuffs = resetEnemyBuffs(nextBuffs);
         }
       }
 
-      // ダメージ計算 (更新された currentHitIsFullBreak を使用)
+      // 現在の敵異常枚数を集計 (ブレイク「後」の最新状態を取得)
+      const remainingEnemyBarriers =
+        enemyStats.hasBarriers && !isFullBreak
+          ? enemyStats.barriers.slice(
+              brokenBarrierCount,
+              enemyStats.initialBarriers,
+            )
+          : [];
+      const enemyAilments = getAilmentStacks(remainingEnemyBarriers, []);
+
+      // 2. ダメージ計算
       const expectedDamage = calcExpectedSingleHitDamage(
         bullet,
         selfStats,
@@ -263,7 +322,7 @@ function runHitOrderSimulation(config: SimulationConfig): {
         mustHit,
         specialAtk,
         damageBonus,
-        currentHitIsFullBreak,
+        isFullBreak,
         enemyAilments,
         selfAilments,
       );
@@ -272,10 +331,8 @@ function runHitOrderSimulation(config: SimulationConfig): {
       // バレットの追加効果適用 (1回目のみ)
       if (!effectFiredSet.has(bulletId)) {
         effectFiredSet.add(bulletId);
-        const { nextBuffs: buffAfterEffects, changes: effectChanges } = applyBulletEffects(
-          nextBuffs,
-          bullet.effects,
-        );
+        const { nextBuffs: buffAfterEffects, changes: effectChanges } =
+          applyBulletEffects(nextBuffs, bullet.effects);
         nextBuffs = buffAfterEffects;
         changes.push(...effectChanges);
       }
@@ -291,8 +348,8 @@ function runHitOrderSimulation(config: SimulationConfig): {
         buffStateBefore: { ...currentBuffs },
         buffStateAfter: { ...nextBuffs },
         barriersRemaining,
-        isFullBreakBefore: currentHitIsFullBreak, // 計算にFBが適用されたか
-        isFullBreak, // ヒット終了後のFB状態
+        isFullBreakBefore: isFullBreak,
+        isFullBreak,
         enemyAilments,
         selfAilments,
       });
@@ -327,13 +384,20 @@ function runStaticBulletCalculation(config: SimulationConfig): {
   const bulletStaticResults: BulletStaticResult[] = [];
   let totalStaticDamage = 0;
 
-  const isInitialFullBreak = enemyStats.hasBarriers && (enemyStats.isFullBreak ?? false);
-  const selfAilments = getAilmentStacks(selfStats.barriers, selfStats.ability.nullifyAilments);
-  
-  // 静的計算では初期状態の異常枚数を使用
-  const enemyAilments = (enemyStats.hasBarriers && !isInitialFullBreak)
-    ? getAilmentStacks(enemyStats.barriers.slice(0, enemyStats.initialBarriers), [])
-    : { 燃焼: 0, 凍結: 0, 帯電: 0, 毒霧: 0, 暗闇: 0 };
+  const isInitialFullBreak =
+    enemyStats.hasBarriers && (enemyStats.isFullBreak ?? false);
+  const selfAilments = getAilmentStacks(
+    selfStats.barriers,
+    selfStats.ability.nullifyAilments,
+  );
+
+  const enemyAilments =
+    enemyStats.hasBarriers && !isInitialFullBreak
+      ? getAilmentStacks(
+          enemyStats.barriers.slice(0, enemyStats.initialBarriers),
+          [],
+        )
+      : { 燃焼: 0, 凍結: 0, 帯電: 0, 毒霧: 0,暗闇: 0 };
 
   for (const bullet of bullets) {
     const mustHit = hasMustHit(bullet.effects);

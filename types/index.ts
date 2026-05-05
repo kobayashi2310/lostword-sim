@@ -85,12 +85,19 @@ export type EnemyDebuffEffectType =
   | '対象CRI回避低下'
   | '対象回避低下';
 
+export type BreakEffectType = '過毒' | '焼却' | '氷解' | '放電' | '閃光';
+
 export interface EffectMustHit {
   readonly kind: '必中';
 }
 
 export interface EffectSpecialAttack {
   readonly kind: '特効';
+}
+
+export interface EffectBreak {
+  readonly kind: 'ブレイク';
+  readonly breakType: BreakEffectType;
 }
 
 export interface EffectSelfBuff {
@@ -110,6 +117,7 @@ export interface EffectEnemyDebuff {
 export type BulletEffect =
   | EffectMustHit
   | EffectSpecialAttack
+  | EffectBreak
   | EffectSelfBuff
   | EffectEnemyDebuff;
 

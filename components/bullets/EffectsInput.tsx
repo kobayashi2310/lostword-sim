@@ -159,8 +159,9 @@ export default function EffectsInput({ effects, onChange }: Props) {
       ))}
 
       <div className="flex gap-1 flex-wrap">
-        {(['必中', '特効', '自身バフ', '対象デバフ'] as EffectKind[]).map(
-          (k) => (
+        {(
+          ['必中', '特効', 'ブレイク', '自身バフ', '対象デバフ'] as EffectKind[]
+        ).map((k) => (
             <button
               key={k}
               onClick={() => add(k)}

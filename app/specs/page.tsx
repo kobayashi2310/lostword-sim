@@ -222,6 +222,34 @@ export default function SpecsPage() {
             </div>
           </div>
         </section>
+        <section className="mb-10">
+          <h3 className="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-400">
+            8. ブレイク弾
+          </h3>
+          <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
+            <p>
+              一部のバレットには、特定の結界異常が付着している結界を強制的に破壊する「ブレイク効果」があります。
+            </p>
+            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded border border-gray-200 dark:border-gray-700">
+              <ul className="grid grid-cols-2 gap-2 text-xs">
+                <li><span className="font-bold text-purple-600">過毒弾:</span> 毒霧をブレイク</li>
+                <li><span className="font-bold text-red-600">焼却弾:</span> 燃焼をブレイク</li>
+                <li><span className="font-bold text-blue-600">氷解弾:</span> 凍結をブレイク</li>
+                <li><span className="font-bold text-yellow-600">放電弾:</span> 帯電をブレイク</li>
+                <li><span className="font-bold text-gray-600">閃光弾:</span> 暗闇をブレイク</li>
+              </ul>
+            </div>
+            <h4 className="font-bold text-gray-800 dark:text-gray-200">処理の優先順位</h4>
+            <p>1つのバレット内で、以下の順序で判定が行われます。</p>
+            <ol className="list-decimal pl-6 space-y-1">
+              <li><strong>ブレイク効果:</strong> 対象の異常がある層をすべて破壊。</li>
+              <li><strong>有利属性ブレイク:</strong> まだ結界が残っている場合、追加で1枚破壊。</li>
+            </ol>
+            <p className="text-xs text-gray-500 italic">
+              ※ダメージ計算は「すべてブレイクし終わった後」の状態で行われます。
+            </p>
+          </div>
+        </section>
       </main>
     </div>
   );

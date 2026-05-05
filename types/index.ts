@@ -111,6 +111,9 @@ export interface SelfStats {
 export interface EnemyStats {
   yangDefense: number; // 陽防（陽気弾の防御割り算に使用）
   yinDefense: number; // 陰防（陰気弾の防御割り算に使用）
+  hasBarriers: boolean;
+  initialBarriers: number; // 1-7
+  isFullBreak: boolean; // 最初からフルブレイク状態か
 }
 
 // ============================================================
@@ -130,9 +133,9 @@ export interface BuffStages {
   selfYinDefR1: number;
   selfYinDefR2: number;
 
-  // 命中（自身命中バフ + 敵回避デバフ combined）
-  hitRateR1: number; // -10〜10
-  hitRateR2: number;
+  // 命中（自身バフ）
+  selfHitR1: number; // -10〜10
+  selfHitR2: number;
 
   // CRI攻撃（自身バフ・R2 は自身のみ）
   selfCriAttackR1: number; // -10〜10
@@ -147,12 +150,23 @@ export interface BuffStages {
   enemyYangDefR2: number;
   enemyYinDefR1: number;
   enemyYinDefR2: number;
+  // 敵回避バフ/デバフ（正=回避アップ=命中率低下、負=回避ダウン=命中率アップ）
+  enemyEvasionR1: number; // -10〜10
+  enemyEvasionR2: number;
   // 敵CRI防御バフ/デバフ（正=バフ=プレイヤーのCRI減衰、負=デバフ=CRI強化）
   enemyCriDefR1: number;      // -10〜10
   // 敵CRI回避バフ/デバフ（正=バフ=命中率低下、負=デバフ=命中率強化）
   enemyCriEvasionR1: number;  // -10〜10
 }
 
+// combined 命中 R1 = clamp(自身R1 − 敵回避R1, -10, 10)
+export function combinedHitRateR1(b: BuffStages): number {
+  return Math.max(-10, Math.min(10, b.selfHitR1 - b.enemyEvasionR1));
+}
+// combined 命中 R2 = clamp(自身R2 − 敵回避R2, 0, 10)
+export function combinedHitRateR2(b: BuffStages): number {
+  return Math.max(0, Math.min(10, b.selfHitR2 - b.enemyEvasionR2));
+}
 // combined CRI攻撃 R1 = clamp(自身R1 − 敵CRI防御R1, -10, 10)
 // 例: 自身6段 − 敵+3バフ = 3段
 // 例: 自身3段 − 敵-5デバフ = 8段
@@ -294,7 +308,11 @@ export interface SingleHitResult {
   specialAttack: boolean;
   expectedDamage: number; // 期待値ダメージ（命中率・CRI率を考慮）
   buffChanges: BuffChange[];
+  buffStateBefore: BuffStages;
   buffStateAfter: BuffStages;
+  barriersRemaining: number;
+  isFullBreakBefore: boolean;
+  isFullBreak: boolean;
 }
 
 export interface BulletStaticResult {
@@ -313,7 +331,10 @@ export interface SimulationResult {
   hitSequence: SingleHitResult[];
   totalSimDamage: number;
 
-  // バレット単体静的期待値
+  // バレット別シミュレーション期待値 (ヒット順の結果を集計したもの)
+  bulletSimResults: BulletStaticResult[];
+
+  // バレット別静的期待値 (初期バフ固定)
   bulletStaticResults: BulletStaticResult[];
   totalStaticDamage: number;
 

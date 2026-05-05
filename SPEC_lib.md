@@ -35,7 +35,7 @@
 
 | 関数名 | 引数 | 戻り値 | 処理内容 |
 | :--- | :--- | :--- | :--- |
-| `runSimulation` | `SimulationConfig` | `SimulationResult` | 静的なバレット計算と、ヒット順シミュレーションの両方を実行して結果をまとめる。 |
+| `runSimulation` | `SimulationConfig` | `SimulationResult` | 静的なバレット計算と、ヒット順シミュレーションの両方を実行。シミュレーション結果をバレットごとに集計した `bulletSimResults` も作成する。 |
 | `runHitOrderSimulation` | `SimulationConfig` | `{ hitSequence, totalSimDamage }` | ヒット順に従い、バレットの発動（追加効果のバフ反映）をシミュレートしながらダメージを累積。 |
 | `validateHitOrder` | `bullets, hitOrder` | `Error[]` | ヒット順に含まれる各バレットの数が、設定された弾数と一致するか検証。 |
 | `parseHitOrder` | `text: string` | `HitOrder` (number[][]) | テキスト形式のヒット順設定をパースして内部形式に変換。 |

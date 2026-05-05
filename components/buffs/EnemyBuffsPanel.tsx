@@ -1,7 +1,11 @@
 'use client';
 
 import type { BuffStages } from '@/types';
-import { combinedCriAttackR1, combinedCriHitR1 } from '@/types';
+import {
+  combinedCriAttackR1,
+  combinedCriHitR1,
+  combinedHitRateR1,
+} from '@/types';
 import BuffRankInput from './BuffRankInput';
 
 interface Props {
@@ -15,12 +19,12 @@ export default function EnemyBuffsPanel({ buffs, onChange }: Props) {
 
   return (
     <div className="space-y-5">
-      {/* 敵 防御バフ/デバフ */}
+      {/* 敵 防御・回避バフ/デバフ */}
       <div>
         <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-          敵 防御バフ/デバフ
+          敵 防御・回避バフ/デバフ
         </h4>
-        <div className="space-y-1.5">
+        <div className="space-y-3">
           <BuffRankInput
             label="敵 陽防"
             r1={buffs.enemyYangDefR1}
@@ -35,6 +39,23 @@ export default function EnemyBuffsPanel({ buffs, onChange }: Props) {
             onChangeR1={set('enemyYinDefR1')}
             onChangeR2={set('enemyYinDefR2')}
           />
+          <div className="space-y-0.5">
+            <BuffRankInput
+              label="敵 回避"
+              r1={buffs.enemyEvasionR1}
+              r2={buffs.enemyEvasionR2}
+              onChangeR1={set('enemyEvasionR1')}
+              onChangeR2={set('enemyEvasionR2')}
+            />
+            <p className="text-xs text-gray-400 dark:text-gray-500 pl-32">
+              自身命中 {buffs.selfHitR1} − 敵回避 {buffs.enemyEvasionR1} =
+              combined{' '}
+              <span className="font-semibold text-blue-500 dark:text-blue-400">
+                {combinedHitRateR1(buffs)}
+              </span>
+              段
+            </p>
+          </div>
         </div>
       </div>
 

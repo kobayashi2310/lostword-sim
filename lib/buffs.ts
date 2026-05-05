@@ -118,7 +118,7 @@ export function applySelfBuff(
       next.selfYinDefR1 = clampR1(next.selfYinDefR1 + stages);
       break;
     case '自身命中上昇':
-      next.hitRateR1 = clampR1(next.hitRateR1 + stages);
+      next.selfHitR1 = clampR1(next.selfHitR1 + stages);
       break;
     case '自身CRI命中上昇':
       next.selfCriHitR1 = clampR1(next.selfCriHitR1 + stages);
@@ -153,6 +153,10 @@ export function applyEnemyDebuff(
     case '対象CRI回避低下':
       next.enemyCriEvasionR1 = clampR1(next.enemyCriEvasionR1 - stages);
       break;
+    case '対象回避低下':
+      next.enemyEvasionR1 = clampR1(next.enemyEvasionR1 - stages);
+      break;
+    // 敵によるプレイヤーへのデバフ（もしあれば）
     case '対象陽攻低下':
       next.yangAttackR1 = clampR1(next.yangAttackR1 - stages);
       break;
@@ -184,8 +188,8 @@ export function createDefaultBuffStages(): BuffStages {
     selfYangDefR2: 0,
     selfYinDefR1: 0,
     selfYinDefR2: 0,
-    hitRateR1: 0,
-    hitRateR2: 0,
+    selfHitR1: 0,
+    selfHitR2: 0,
     selfCriAttackR1: 0,
     selfCriAttackR2: 0,
     selfCriHitR1: 0,
@@ -194,6 +198,8 @@ export function createDefaultBuffStages(): BuffStages {
     enemyYangDefR2: 0,
     enemyYinDefR1: 0,
     enemyYinDefR2: 0,
+    enemyEvasionR1: 0,
+    enemyEvasionR2: 0,
     enemyCriDefR1: 0,
     enemyCriEvasionR1: 0,
   };
@@ -242,12 +248,14 @@ export function validateBuffStages(buffs: BuffStages): BuffValidationError[] {
   check(buffs.enemyYinDefR2, '敵陰防R2', 0, 10);
 
   // 命中/CRI系（R1: -10〜+10 / R2: 0〜+10）
-  check(buffs.hitRateR1, '命中R1', -10, 10);
-  check(buffs.hitRateR2, '命中R2', 0, 10);
+  check(buffs.selfHitR1, '命中R1', -10, 10);
+  check(buffs.selfHitR2, '命中R2', 0, 10);
   check(buffs.selfCriAttackR1, '自身CRI攻撃R1', -10, 10);
   check(buffs.selfCriAttackR2, '自身CRI攻撃R2', 0, 10);
   check(buffs.selfCriHitR1, '自身CRI命中R1', -10, 10);
   check(buffs.selfCriHitR2, '自身CRI命中R2', 0, 10);
+  check(buffs.enemyEvasionR1, '敵回避R1', -10, 10);
+  check(buffs.enemyEvasionR2, '敵回避R2', 0, 10);
   check(buffs.enemyCriDefR1, '敵CRI防御R1', -10, 10);
   check(buffs.enemyCriEvasionR1, '敵CRI回避R1', -10, 10);
 

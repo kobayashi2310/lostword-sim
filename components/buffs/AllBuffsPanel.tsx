@@ -76,18 +76,18 @@ export default function AllBuffsPanel({ buffs, onChange }: Props) {
         </div>
       </div>
 
-      {/* 命中バフ（自身命中バフ + 敵回避デバフ合算） */}
+      {/* 自身 命中バフ */}
       <div>
         <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-          命中バフ
+          自身 命中バフ
         </h4>
         <div className="space-y-1.5">
           <BuffRankInput
             label="命中"
-            r1={buffs.hitRateR1}
-            r2={buffs.hitRateR2}
-            onChangeR1={set('hitRateR1')}
-            onChangeR2={set('hitRateR2')}
+            r1={buffs.selfHitR1}
+            r2={buffs.selfHitR2}
+            onChangeR1={set('selfHitR1')}
+            onChangeR2={set('selfHitR2')}
           />
         </div>
       </div>

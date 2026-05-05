@@ -10,6 +10,8 @@ import {
   calcTotalChargeMult,
   combinedCriAttackR1,
   combinedCriHitR1,
+  combinedHitRateR1,
+  combinedHitRateR2,
 } from '@/types';
 import {
   getAtkDefSpdMultiplier,
@@ -116,9 +118,19 @@ export function calcSingleHitDamage(
     disadvantageBonus: 0,
     chargeEffects: [],
   },
+  isFullBreak: boolean = false,
 ): number {
   const attackPower = calcAttackPower(selfStats, buffs, bullet);
-  const enemyDefense = calcEnemyDefense(enemyStats, buffs, bullet);
+
+  // フルブレイク時は防御デバフ10段階固定（ダメージが実質4倍になる）
+  let enemyDefense: number;
+  if (isFullBreak) {
+    const isYang = bullet.yinYang === '陽気';
+    const baseDef = isYang ? enemyStats.yangDefense : enemyStats.yinDefense;
+    enemyDefense = baseDef * getAtkDefSpdMultiplier(-10);
+  } else {
+    enemyDefense = calcEnemyDefense(enemyStats, buffs, bullet);
+  }
 
   if (enemyDefense <= 0) return 0;
 
@@ -173,6 +185,7 @@ export function calcExpectedSingleHitDamage(
     disadvantageBonus: 0,
     chargeEffects: [],
   },
+  isFullBreak: boolean = false,
 ): number {
   const nonCritDmg = calcSingleHitDamage(
     bullet,
@@ -183,6 +196,7 @@ export function calcExpectedSingleHitDamage(
     advantage,
     false,
     damageBonus,
+    isFullBreak,
   );
   const critDmg = calcSingleHitDamage(
     bullet,
@@ -193,6 +207,7 @@ export function calcExpectedSingleHitDamage(
     advantage,
     true,
     damageBonus,
+    isFullBreak,
   );
 
   const criRatePct = getEffectiveCriRate(
@@ -204,8 +219,8 @@ export function calcExpectedSingleHitDamage(
   const criRate = criRatePct / 100;
   const hitRatePct = getEffectiveHitRate(
     bullet.hitRate,
-    buffs.hitRateR1,
-    buffs.hitRateR2,
+    combinedHitRateR1(buffs),
+    combinedHitRateR2(buffs),
     mustHit,
   );
   const hitRate = hitRatePct / 100;
@@ -235,6 +250,7 @@ export function calcStageTotalExpected(
     disadvantageBonus: 0,
     chargeEffects: [],
   },
+  isFullBreak: boolean = false,
 ): number {
   const expectedSingle = calcExpectedSingleHitDamage(
     bullet,
@@ -246,6 +262,7 @@ export function calcStageTotalExpected(
     mustHit,
     specialAttack,
     damageBonus,
+    isFullBreak,
   );
   return expectedSingle * bullet.count;
 }

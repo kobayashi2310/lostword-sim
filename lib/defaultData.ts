@@ -14,6 +14,9 @@ export const DEFAULT_SELF_STATS: SelfStats = {
 export const DEFAULT_ENEMY_STATS: EnemyStats = {
   yangDefense: 5000,
   yinDefense: 5000,
+  hasBarriers: true,
+  initialBarriers: 5,
+  isFullBreak: false,
 };
 
 export const DEFAULT_BUFF_STAGES = createDefaultBuffStages();

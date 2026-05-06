@@ -21,6 +21,8 @@ const targetLabels: Record<AccumulationTarget, string> = {
   yinDefense: '陰防',
 };
 
+const ALL_TARGETS: AccumulationTarget[] = ['yangAttack', 'yinAttack', 'speed', 'yangDefense', 'yinDefense'];
+
 /** 小数なし・0未満なし の整数変換 */
 function toInt(v: number, min = 0): number {
   const n = Math.floor(Number.isFinite(v) ? v : 0);
@@ -32,8 +34,15 @@ function newCharge(kind: ChargeKind): ChargeEffect {
   return { kind, ratePerStack: 0, stacks: 1 };
 }
 
-function newAcc(): AccumulationEffect {
-  return { sourceStat: 'speed', targetStat: 'yangAttack', sourceValue: 1000, rate: 50 };
+function findUnusedAcc(existing: AccumulationEffect[]): AccumulationEffect | null {
+  for (const src of ALL_TARGETS) {
+    for (const tgt of ALL_TARGETS) {
+      if (!existing.some(e => e.sourceStat === src && e.targetStat === tgt)) {
+        return { sourceStat: src, targetStat: tgt, sourceValue: 1000, rate: 50 };
+      }
+    }
+  }
+  return null;
 }
 
 /** 各エントリの蓄力倍率寄与（%表示用） */
@@ -58,7 +67,10 @@ export default function SpecialBuffInput({ damageBonus, onChange }: Props) {
   const updateCharge = (i: number, e: ChargeEffect) =>
     setCharges(chargeEffects.map((x, idx) => (idx === i ? e : x)));
 
-  const addAcc = () => setAccs([...accumulationEffects, newAcc()]);
+  const addAcc = () => {
+    const fresh = findUnusedAcc(accumulationEffects);
+    if (fresh) setAccs([...accumulationEffects, fresh]);
+  };
   const removeAcc = (i: number) => setAccs(accumulationEffects.filter((_, idx) => idx !== i));
   const updateAcc = (i: number, a: AccumulationEffect) => 
     setAccs(accumulationEffects.map((x, idx) => (idx === i ? a : x)));
@@ -68,7 +80,7 @@ export default function SpecialBuffInput({ damageBonus, onChange }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* 蓄力セクション (中略) */}
+      {/* 蓄力セクション */}
       <div className="space-y-3">
         <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">蓄力補正</h4>
         {chargeEffects.map((effect, i) => (
@@ -204,7 +216,16 @@ export default function SpecialBuffInput({ damageBonus, onChange }: Props) {
         <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">蓄積補正 (加算バフ)</h4>
         
         {accumulationEffects.map((acc, i) => {
-          const result = Math.floor((acc.sourceValue * acc.rate) / 100);
+          const result = Math.floor(((acc.sourceValue ?? 0) * (acc.rate ?? 0)) / 100);
+          
+          // この行で選択可能な targetStat を抽出 (他の行で使用中の sourceStat とのペアを除外)
+          const availableTargets = ALL_TARGETS.filter(tgt => {
+            if (tgt === acc.targetStat) return true; // 現在選んでいるものはOK
+            return !accumulationEffects.some((other, idx) => 
+              idx !== i && other.sourceStat === acc.sourceStat && other.targetStat === tgt
+            );
+          });
+
           return (
             <div
               key={i}
@@ -212,12 +233,23 @@ export default function SpecialBuffInput({ damageBonus, onChange }: Props) {
             >
               <select
                 value={acc.sourceStat}
-                onChange={(e) => updateAcc(i, { ...acc, sourceStat: e.target.value as AccumulationTarget })}
+                onChange={(e) => {
+                  const newSrc = e.target.value as AccumulationTarget;
+                  const isDup = accumulationEffects.some((other, idx) => 
+                    idx !== i && other.sourceStat === newSrc && other.targetStat === acc.targetStat
+                  );
+                  if (isDup) {
+                    const fallback = ALL_TARGETS.find(t => !accumulationEffects.some(o => o.sourceStat === newSrc && o.targetStat === t));
+                    if (fallback) updateAcc(i, { ...acc, sourceStat: newSrc, targetStat: fallback });
+                  } else {
+                    updateAcc(i, { ...acc, sourceStat: newSrc });
+                  }
+                }}
                 className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded text-[10px] px-1 py-0.5"
                 title="参照するステータス"
               >
-                {Object.entries(targetLabels).map(([val, label]) => (
-                  <option key={val} value={val}>{label}</option>
+                {ALL_TARGETS.map(val => (
+                  <option key={val} value={val}>{targetLabels[val]}</option>
                 ))}
               </select>
               <span className="text-[10px] text-gray-400">→</span>
@@ -227,8 +259,8 @@ export default function SpecialBuffInput({ damageBonus, onChange }: Props) {
                 className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded text-[10px] px-1 py-0.5"
                 title="加算先のステータス"
               >
-                {Object.entries(targetLabels).map(([val, label]) => (
-                  <option key={val} value={val}>{label}</option>
+                {availableTargets.map(val => (
+                  <option key={val} value={val}>{targetLabels[val]}</option>
                 ))}
               </select>
 

@@ -334,7 +334,9 @@ function runHitOrderSimulation(config: SimulationConfig): {
 
       if (enemyStats.hasBarriers && !isFullBreak && currentEnemyBarriers.length === 0) {
         isFullBreak = true;
-        nextBuffs = resetEnemyBuffs(nextBuffs);
+        // FB発生の瞬間に、計算用バフと次回のバフを両方リセットする
+        currentBuffs = resetEnemyBuffs(currentBuffs);
+        nextBuffs = { ...currentBuffs };
       }
 
       // 現在の異常枚数を集計

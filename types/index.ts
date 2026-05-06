@@ -357,6 +357,25 @@ export interface DamageBonus {
   advantageBonus: number;
   disadvantageBonus: number;
   chargeEffects: ChargeEffect[];
+  accumulationEffects: AccumulationEffect[];
+}
+
+export type AccumulationTarget =
+  | 'yangAttack'
+  | 'yinAttack'
+  | 'speed'
+  | 'yangDefense'
+  | 'yinDefense';
+
+export interface AccumulationEffect {
+  sourceStat: AccumulationTarget; // 元になるステータス
+  targetStat: AccumulationTarget; // 上乗せ先のステータス
+  sourceValue: number;           // 元のステータスの数値
+  rate: number;                  // 倍率 (%)
+}
+
+export function calcAccumulationValue(eff: AccumulationEffect): number {
+  return Math.floor((eff.sourceValue * eff.rate) / 100);
 }
 
 export function createDefaultDamageBonus(): DamageBonus {
@@ -366,6 +385,7 @@ export function createDefaultDamageBonus(): DamageBonus {
     advantageBonus: 0,
     disadvantageBonus: 0,
     chargeEffects: [],
+    accumulationEffects: [],
   };
 }
 

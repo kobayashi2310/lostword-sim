@@ -79,6 +79,12 @@
 - `bulletKindBonus`: 弾種ダメージUP (%)
 - `advantageBonus` / `disadvantageBonus`: 相性補正の強化 (%)
 - `chargeEffects`: 蓄力効果のリスト
+- `accumulationEffects`: 蓄積効果（固定値ステータス加算）のリスト
+
+### `AccumulationEffect`
+- `target`: 加算対象のステータス（陽攻/陰攻/速力/陽防/陰防）
+- `value`: 加算する固定値
+- `label`: UI表示用のラベル
 
 ## 6. シミュレーション結果 (SimulationResult)
 

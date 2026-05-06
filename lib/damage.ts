@@ -57,20 +57,35 @@ export function calcAttackPower(
     毒霧: 0,
     暗闇: 0,
   },
+  damageBonus: DamageBonus = {
+    elementBonus: {},
+    bulletKindBonus: {},
+    advantageBonus: 0,
+    disadvantageBonus: 0,
+    chargeEffects: [],
+    accumulationEffects: [],
+  },
 ): number {
   const isYang = bullet.yinYang === '陽気';
   
+  // 蓄積値の集計
+  const getAcc = (target: string) => 
+    damageBonus.accumulationEffects
+      .filter(e => e.targetStat === target)
+      .reduce((sum, e) => sum + Math.floor((e.sourceValue * e.rate) / 100), 0);
+
   // 能力によるバフボーナスを計算
   const abilityBonus = getAbilityBuffBonus(selfAilments, selfStats.ability);
 
-  // ステータス倍率の計算 (能力ボーナスをRank1に加算)
-  const baseAtk = isYang ? selfStats.yangAttack : selfStats.yinAttack;
+  // ステータス倍率の計算 (基礎値 + 蓄積) * バフ
+  const rawAtk = isYang ? selfStats.yangAttack : selfStats.yinAttack;
+  const baseAtk = rawAtk + getAcc(isYang ? 'yangAttack' : 'yinAttack');
+  
   const atkR1 = isYang ? buffs.yangAttackR1 : buffs.yinAttackR1;
   const atkR2 = isYang ? buffs.yangAttackR2 : buffs.yinAttackR2;
   const combinedAtkR1 = clampR1(atkR1 + abilityBonus['陽攻・陰攻・CRI攻撃・CRI命中']);
   
   // 結界異常デバフ (燃焼は陰攻、毒霧は陽攻)
-  // 能力で「バフに変換」または「無効化」している場合はこのデバフ（0.875倍）を受けない
   const isPoisonNullified = selfStats.ability.nullifyAilments.includes('毒霧') || 
     selfStats.ability.convertAilments.some(c => c.ailment === '毒霧');
   const isBurnNullified = selfStats.ability.nullifyAilments.includes('燃焼') ||
@@ -82,7 +97,8 @@ export function calcAttackPower(
 
   const atkMult = getAtkDefSpdMultiplier(combinedAtkR1) * getAtkDefSpdMultiplier(atkR2) * atkAilmentMult;
 
-  // 速力
+  // 速力 (基礎値 + 蓄積) * バフ
+  const baseSpeed = selfStats.speed + getAcc('speed');
   const combinedSpeedR1 = clampR1(buffs.speedR1 + abilityBonus['速力・命中・回避']);
   const isFreezeNullified = selfStats.ability.nullifyAilments.includes('凍結') ||
     selfStats.ability.convertAilments.some(c => c.ailment === '凍結');
@@ -93,13 +109,14 @@ export function calcAttackPower(
     getAtkDefSpdMultiplier(buffs.speedR2) *
     speedAilmentMult;
 
-  // 自身防御 (硬質弾用)
-  const selfDef = isYang ? selfStats.yangDefense : selfStats.yinDefense;
+  // 自身防御 (基礎値 + 蓄積) * バフ
+  const rawDef = isYang ? selfStats.yangDefense : selfStats.yinDefense;
+  const baseSelfDef = rawDef + getAcc(isYang ? 'yangDefense' : 'yinDefense');
+  
   const selfDefR1 = isYang ? buffs.selfYangDefR1 : buffs.selfYinDefR1;
   const selfDefR2 = isYang ? buffs.selfYangDefR2 : buffs.selfYinDefR2;
   const combinedSelfDefR1 = clampR1(selfDefR1 + abilityBonus['陽防・陰防・CRI防御・CRI回避']);
   
-  // 防御への異常デバフ (燃焼は陰防、毒霧は陽防)
   const selfDefAilmentMult = isYang
     ? (isPoisonNullified ? 1.0 : Math.pow(0.875, selfAilments.毒霧))
     : (isBurnNullified ? 1.0 : Math.pow(0.875, selfAilments.燃焼));
@@ -109,12 +126,12 @@ export function calcAttackPower(
 
   const slashComponent =
     bullet.slashPercent > 0
-      ? selfStats.speed * speedMult * (bullet.slashPercent / 100)
+      ? baseSpeed * speedMult * (bullet.slashPercent / 100)
       : 0;
 
   const hardComponent =
     bullet.hardPercent > 0
-      ? selfDef * selfDefMult * (bullet.hardPercent / 100)
+      ? baseSelfDef * selfDefMult * (bullet.hardPercent / 100)
       : 0;
 
   return baseAtk * atkMult + slashComponent + hardComponent;
@@ -191,6 +208,7 @@ export function calcSingleHitDamage(
     advantageBonus: 0,
     disadvantageBonus: 0,
     chargeEffects: [],
+    accumulationEffects: [],
   },
   isFullBreak: boolean = false,
   enemyAilments: Record<BarrierAilmentType, number> = {
@@ -208,7 +226,7 @@ export function calcSingleHitDamage(
     暗闇: 0,
   },
 ): number {
-  const attackPower = calcAttackPower(selfStats, buffs, bullet, selfAilments);
+  const attackPower = calcAttackPower(selfStats, buffs, bullet, selfAilments, damageBonus);
   const enemyDefense = calcEnemyDefense(enemyStats, buffs, bullet, enemyAilments, isFullBreak);
 
   if (enemyDefense <= 0) return 0;

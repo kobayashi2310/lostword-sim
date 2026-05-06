@@ -48,6 +48,7 @@
 | `'必中'` | - | 命中率を100%として計算。 |
 | `'特効'` | - | 特効対象（CRI率100%）かどうかの判定対象。 |
 | `'ブレイク'` | `breakType` | 結界異常を破壊する効果。 |
+| `'異常付与'` | `ailmentType`, `target`, `probability` | 自身または相手に結界異常を付与する。 |
 | `'自身バフ'` | `buffType`, `probability`, `stages` | 攻撃後に自身に付与されるバフ。 |
 | `'対象デバフ'` | `debuffType`, `probability`, `stages` | 攻撃後に対象に付与されるデバフ。 |
 

@@ -87,6 +87,8 @@ export type EnemyDebuffEffectType =
 
 export type BreakEffectType = '過毒' | '焼却' | '氷解' | '放電' | '閃光';
 
+export type AilmentTarget = 'self' | 'enemy';
+
 export interface EffectMustHit {
   readonly kind: '必中';
 }
@@ -98,6 +100,13 @@ export interface EffectSpecialAttack {
 export interface EffectBreak {
   readonly kind: 'ブレイク';
   readonly breakType: BreakEffectType;
+}
+
+export interface EffectInflictAilment {
+  readonly kind: '異常付与';
+  readonly ailmentType: BarrierAilmentType;
+  readonly target: AilmentTarget;
+  readonly probability: number; // 0–100 (%)
 }
 
 export interface EffectSelfBuff {
@@ -118,6 +127,7 @@ export type BulletEffect =
   | EffectMustHit
   | EffectSpecialAttack
   | EffectBreak
+  | EffectInflictAilment
   | EffectSelfBuff
   | EffectEnemyDebuff;
 

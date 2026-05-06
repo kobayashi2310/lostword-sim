@@ -91,11 +91,10 @@ export function getEffectiveCriRate(
 // ============================================================
 
 /**
- * 結界異常枚数を集計する（無効化設定を考慮）
+ * 結界異常枚数を集計する
  */
 export function getAilmentStacks(
   barriers: BarrierStatus[],
-  nullifyAilments: BarrierAilmentType[] = [],
 ): Record<BarrierAilmentType, number> {
   const counts: Record<BarrierAilmentType, number> = {
     燃焼: 0,
@@ -106,7 +105,7 @@ export function getAilmentStacks(
   };
 
   barriers.forEach((b) => {
-    if (b.ailment && !nullifyAilments.includes(b.ailment)) {
+    if (b.ailment) {
       counts[b.ailment]++;
     }
   });

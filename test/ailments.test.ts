@@ -1,34 +1,23 @@
 import { describe, it, expect } from 'vitest';
 import { getAilmentStacks, getAbilityBuffBonus, createDefaultBuffStages } from '@/lib/buffs';
 import { calcAttackPower, calcEnemyDefense } from '@/lib/damage';
-import type { BarrierStatus, AbilityConfig, SelfStats, Bullet, EnemyStats } from '@/types';
+import { runSimulation } from '@/lib/simulation';
+import type { BarrierStatus, AbilityConfig, SelfStats, Bullet, EnemyStats, SimulationConfig, BuffStages, EnemyWeaknessConfig, DamageBonus } from '@/types';
+import { createDefaultAbilityConfig, createDefaultWeakness, createDefaultDamageBonus } from '@/types';
 
 describe('結界異常ロジックの検証', () => {
   describe('getAilmentStacks (結界異常の集計)', () => {
-    it('無効化設定がない場合、すべての異常を正しくカウントする', () => {
+    it('すべての異常を正しくカウントする', () => {
       const barriers: BarrierStatus[] = [
         { ailment: '燃焼' },
         { ailment: '燃焼' },
         { ailment: '凍結' },
         { ailment: null },
       ];
-      const stacks = getAilmentStacks(barriers, []);
+      const stacks = getAilmentStacks(barriers);
       expect(stacks.燃焼).toBe(2);
       expect(stacks.凍結).toBe(1);
       expect(stacks.帯電).toBe(0);
-    });
-
-    it('無効化設定がある場合、対象の異常を除外してカウントする', () => {
-      const barriers: BarrierStatus[] = [
-        { ailment: '燃焼' },
-        { ailment: '毒霧' },
-        { ailment: '暗闇' },
-      ];
-      const nullify = ['毒霧', '暗闇'] as any;
-      const stacks = getAilmentStacks(barriers, nullify);
-      expect(stacks.燃焼).toBe(1);
-      expect(stacks.毒霧).toBe(0);
-      expect(stacks.暗闇).toBe(0);
     });
   });
 
@@ -133,6 +122,94 @@ describe('結界異常ロジックの検証', () => {
       const def = calcEnemyDefense(enemy, buffs, bullet, ailments);
       // デバフ無効化 (1.0倍) + 陽防バフ2段階 (1.6倍)
       expect(def).toBe(1600);
+    });
+  });
+
+  describe('異常付与の動적ロジック (runSimulation)', () => {
+    const defaultSelf: SelfStats = {
+      yangAttack: 1000, yinAttack: 1000, speed: 1000, yangDefense: 1000, yinDefense: 1000,
+      barriers: Array(5).fill({ ailment: null }) as any,
+      ability: createDefaultAbilityConfig(),
+    };
+    const defaultEnemy: EnemyStats = {
+      yangDefense: 1000, yinDefense: 1000, hasBarriers: true, initialBarriers: 3, isFullBreak: false,
+      barriers: Array(7).fill({ ailment: null }) as any,
+      ability: createDefaultAbilityConfig(),
+    };
+    const initialBuffs = createDefaultBuffStages();
+    const weakness = createDefaultWeakness();
+    const damageBonus = createDefaultDamageBonus();
+
+    it('バレットの追加効果で敵に異常が付与され、既存の異常がシフトする', () => {
+      const bullets: Bullet[] = [
+        {
+          id: 1, element: '星', yinYang: '陽気', bulletKind: '通常弾', power: 10, count: 1, hitRate: 100, criRate: 0,
+          slashPercent: 0, hardPercent: 0, isPenetration: false,
+          effects: [{ kind: '異常付与', ailmentType: '燃焼', target: 'enemy', probability: 100 }]
+        },
+        {
+          id: 2, element: '星', yinYang: '陽気', bulletKind: '通常弾', power: 10, count: 1, hitRate: 100, criRate: 0,
+          slashPercent: 0, hardPercent: 0, isPenetration: false,
+          effects: [{ kind: '異常付与', ailmentType: '毒霧', target: 'enemy', probability: 100 }]
+        }
+      ];
+
+      const config: SimulationConfig = {
+        selfStats: defaultSelf,
+        enemyStats: defaultEnemy,
+        initialBuffs,
+        bullets,
+        hitOrder: [[1], [2]],
+        isGirlReincarnation: false,
+        enemyWeakness: weakness,
+        specialAttackActive: {},
+        damageBonus,
+      };
+
+      const result = runSimulation(config);
+      
+      // 1ヒット目終了後: 燃焼が1枚付与されているはず
+      expect(result.hitSequence[0].enemyAilments.燃焼).toBe(0); // ダメージ計算時はまだ0
+      expect(result.hitSequence[1].enemyAilments.燃焼).toBe(1); // 2ヒット目の計算時は1枚ある
+      
+      const secondHit = result.hitSequence[1];
+      expect(secondHit.enemyAilments.燃焼).toBe(1);
+      expect(secondHit.enemyAilments.毒霧).toBe(0);
+    });
+
+    it('結界がフルになるとそれ以上付与されない', () => {
+      const enemyWith1Barrier: EnemyStats = { ...defaultEnemy, initialBarriers: 1 };
+      const bullets: Bullet[] = [
+        {
+          id: 1, element: '星', yinYang: '陽気', bulletKind: '通常弾', power: 10, count: 1, hitRate: 100, criRate: 0,
+          slashPercent: 0, hardPercent: 0, isPenetration: false,
+          effects: [
+            { kind: '異常付与', ailmentType: '燃焼', target: 'enemy', probability: 100 },
+            { kind: '異常付与', ailmentType: '毒霧', target: 'enemy', probability: 100 }
+          ]
+        },
+        {
+          id: 2, element: '星', yinYang: '陽気', bulletKind: '通常弾', power: 10, count: 1, hitRate: 100, criRate: 0,
+          slashPercent: 0, hardPercent: 0, isPenetration: false,
+          effects: []
+        }
+      ];
+
+      const config: SimulationConfig = {
+        selfStats: defaultSelf,
+        enemyStats: enemyWith1Barrier,
+        initialBuffs,
+        bullets,
+        hitOrder: [[1], [2]],
+        isGirlReincarnation: false,
+        enemyWeakness: weakness,
+        specialAttackActive: {},
+        damageBonus,
+      };
+
+      const result = runSimulation(config);
+      expect(result.hitSequence[1].enemyAilments.燃焼).toBe(1);
+      expect(result.hitSequence[1].enemyAilments.毒霧).toBe(0);
     });
   });
 });

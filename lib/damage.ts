@@ -157,27 +157,29 @@ export function calcEnemyDefense(
   const isYang = bullet.yinYang === '陽気';
   const baseDef = isYang ? enemyStats.yangDefense : enemyStats.yinDefense;
   
-  // 敵の能力によるバフボーナスを計算
-  const abilityBonus = getAbilityBuffBonus(enemyAilments, enemyStats.ability);
+  // 1. フルブレイク補正 (別枠乗算)
+  // フルブレイク時は防御デバフ10段階相当(1/4)の補正がかかる
+  const fbMult = isFullBreak ? getAtkDefSpdMultiplier(-10) : 1.0;
 
-  let defMult = 1.0;
-
-  if (bullet.isPenetration) {
-    // 貫通弾は防御バフ・デバフ（フルブレイクの-10段階も含む）を一切無視
-    defMult = 1.0;
-  } else if (isFullBreak) {
-    // フルブレイク時は防御デバフ10段階固定（能力バフは乗らない）
-    defMult = getAtkDefSpdMultiplier(-10);
-  } else {
-    // 通常はRank1/Rank2バフを適用。さらに敵の能力バフを加算
-    const defR1 = isYang ? buffs.enemyYangDefR1 : buffs.enemyYinDefR1;
-    const defR2 = isYang ? buffs.enemyYangDefR2 : buffs.enemyYinDefR2;
-    const combinedDefR1 = clampR1(defR1 + abilityBonus['陽防・陰防・CRI防御・CRI回避']);
-    defMult = getAtkDefSpdMultiplier(combinedDefR1) * getAtkDefSpdMultiplier(defR2);
+  // 2. Rankバフ・デバフ補正 (貫通弾はここを無視)
+  let rankMult = 1.0;
+  if (!bullet.isPenetration) {
+    if (isFullBreak) {
+      // フルブレイク中はRankバフ/デバフがリセットされているため1.0固定
+      // (CRI防御等の特殊なものは別関数で処理)
+      rankMult = 1.0;
+    } else {
+      // 通常時はRank1/Rank2バフ、および敵の能力バフを適用
+      const abilityBonus = getAbilityBuffBonus(enemyAilments, enemyStats.ability);
+      const defR1 = isYang ? buffs.enemyYangDefR1 : buffs.enemyYinDefR1;
+      const defR2 = isYang ? buffs.enemyYangDefR2 : buffs.enemyYinDefR2;
+      const combinedDefR1 = clampR1(defR1 + abilityBonus['陽防・陰防・CRI防御・CRI回避']);
+      rankMult = getAtkDefSpdMultiplier(combinedDefR1) * getAtkDefSpdMultiplier(defR2);
+    }
   }
 
-  // 結界異常デバフ (燃焼は陰防、毒霧は陽防)
-  // 能力で「バフに変換」または「無効化」している場合はこのデバフ（0.875倍）を受けない
+  // 3. 結界異常デバフ (燃焼は陰防、毒霧は陽防)
+  // 貫通弾でも恩恵を受けることができる
   const isPoisonNullified = enemyStats.ability.nullifyAilments.includes('毒霧') || 
     enemyStats.ability.convertAilments.some(c => c.ailment === '毒霧');
   const isBurnNullified = enemyStats.ability.nullifyAilments.includes('燃焼') ||
@@ -187,7 +189,8 @@ export function calcEnemyDefense(
     ? (isPoisonNullified ? 1.0 : Math.pow(0.875, enemyAilments.毒霧))
     : (isBurnNullified ? 1.0 : Math.pow(0.875, enemyAilments.燃焼));
 
-  return baseDef * defMult * ailmentMult;
+  // 最終的な防御力 = 基礎 × フルブレイク補正 × Rank補正 × 異常デバフ
+  return baseDef * fbMult * rankMult * ailmentMult;
 }
 
 // ============================================================

@@ -44,7 +44,7 @@ export function getCritMultiplier(
   criAttackR2: number,
 ): number {
   const r1Mult = getAtkDefSpdMultiplier(criAttackR1);
-  const r2Mult = getAtkDefSpdMultiplier(Math.max(0, criAttackR2));
+  const r2Mult = getAtkDefSpdMultiplier(criAttackR2);
   const criDamageRate = 1.0 * r1Mult * r2Mult;
   return 1 + criDamageRate;
 }
@@ -249,7 +249,9 @@ export function createDefaultBuffStages(): BuffStages {
     enemyEvasionR1: 0,
     enemyEvasionR2: 0,
     enemyCriDefR1: 0,
+    enemyCriDefR2: 0,
     enemyCriEvasionR1: 0,
+    enemyCriEvasionR2: 0,
   };
 }
 
@@ -282,9 +284,9 @@ export function validateBuffStages(buffs: BuffStages): BuffValidationError[] {
   check(buffs.selfYinDefR1, '自身陰防R1', -10, 10);
   check(buffs.selfYinDefR2, '自身陰防R2', 0, 10);
   check(buffs.enemyYangDefR1, '敵陽防R1', -10, 10);
-  check(buffs.enemyYangDefR2, '敵陽防R2', 0, 10);
+  check(buffs.enemyYangDefR2, '敵陽防R2', -10, 0);
   check(buffs.enemyYinDefR1, '敵陰防R1', -10, 10);
-  check(buffs.enemyYinDefR2, '敵陰防R2', 0, 10);
+  check(buffs.enemyYinDefR2, '敵陰防R2', -10, 0);
   check(buffs.selfHitR1, '命中R1', -10, 10);
   check(buffs.selfHitR2, '命中R2', 0, 10);
   check(buffs.selfCriAttackR1, '自身CRI攻撃R1', -10, 10);
@@ -292,9 +294,11 @@ export function validateBuffStages(buffs: BuffStages): BuffValidationError[] {
   check(buffs.selfCriHitR1, '自身CRI命中R1', -10, 10);
   check(buffs.selfCriHitR2, '自身CRI命中R2', 0, 10);
   check(buffs.enemyEvasionR1, '敵回避R1', -10, 10);
-  check(buffs.enemyEvasionR2, '敵回避R2', 0, 10);
+  check(buffs.enemyEvasionR2, '敵回避R2', -10, 0);
   check(buffs.enemyCriDefR1, '敵CRI防御R1', -10, 10);
+  check(buffs.enemyCriDefR2, '敵CRI防御R2', -10, 0);
   check(buffs.enemyCriEvasionR1, '敵CRI回避R1', -10, 10);
+  check(buffs.enemyCriEvasionR2, '敵CRI回避R2', -10, 0);
   return errors;
 }
 

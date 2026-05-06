@@ -46,25 +46,42 @@ export default function SpecsPage() {
             2. バフ・デバフの倍率計算
           </h3>
           <div className="space-y-4">
-            <h4 className="font-bold text-gray-800 dark:text-gray-200">
-              攻撃・防御・速力系 (Rank 1)
-            </h4>
-            <p className="text-sm">
-              1段階につき30%の変化。マイナス段階は除算となります。
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded">
-                <p className="text-xs text-blue-700 dark:text-blue-300 mb-1">
-                  プラス (n段階)
-                </p>
-                <code className="text-sm">× (1 + 0.3 * n)</code>
+            <div>
+              <h4 className="font-bold text-gray-800 dark:text-gray-200">
+                通常ランク (Rank 1)
+              </h4>
+              <p className="text-sm">
+                1段階につき30%の変化。マイナス段階は除算となります（-10〜+10）。
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded">
+                  <p className="text-xs text-blue-700 dark:text-blue-300 mb-1">
+                    プラス (n段階)
+                  </p>
+                  <code className="text-sm">× (1 + 0.3 * n)</code>
+                </div>
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded">
+                  <p className="text-xs text-red-700 dark:text-red-300 mb-1">
+                    マイナス (n段階)
+                  </p>
+                  <code className="text-sm">÷ (1 + 0.3 * |n|)</code>
+                </div>
               </div>
-              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded">
-                <p className="text-xs text-red-700 dark:text-red-300 mb-1">
-                  マイナス (n段階)
-                </p>
-                <code className="text-sm">÷ (1 + 0.3 * |n|)</code>
+            </div>
+            <div>
+              <h4 className="font-bold text-gray-800 dark:text-gray-200">
+                つよさRank II (Rank 2)
+              </h4>
+              <p className="text-sm">
+                通常ランクとは別枠で乗算されます。自身へのバフ（0〜10）と敵へのデバフ（-10〜0）として機能します。
+              </p>
+              <div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded mt-2">
+                <p className="text-xs text-gray-500 mb-1">最終倍率</p>
+                <code className="text-sm">通常Rank倍率 × Rank II倍率</code>
               </div>
+            </div>
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800 rounded text-xs text-yellow-800 dark:text-yellow-200">
+              <strong>💡 表示形式:</strong> シミュレーション結果では `R1/R2` 形式（例：`-10/-2`）で個別に表示されます。
             </div>
           </div>
         </section>
@@ -93,11 +110,14 @@ export default function SpecsPage() {
             <div>
               <h4 className="font-bold mb-2">クリティカル補正</h4>
               <p className="text-sm leading-relaxed">
-                基礎 CRI ダメージは 2.0倍 です。CRI
-                攻撃バフにより、増加分（+100%分）に対してバフ倍率が掛かります。
+                基礎 CRI ダメージは 2.0倍 です。CRI 攻撃バフにより、増加分（+100%分）に対してバフ倍率が掛かります。
                 <br />
                 <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1">
-                  補正 = 1 + (1.0 * R1倍率 * R2倍率)
+                  CRIダメージ増加率 = 1.0 * (R1合算倍率) * (R2合算倍率)
+                </code>
+                <br />
+                <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1">
+                  最終クリティカル倍率 = 1 + CRIダメージ増加率
                 </code>
               </p>
             </div>

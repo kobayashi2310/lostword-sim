@@ -225,7 +225,9 @@ function SimulationTable({
       selfCriHitR1: '自CRI命R1',
       selfCriHitR2: '自CRI命R2',
       enemyCriDefR1: '敵CRI防R1',
+      enemyCriDefR2: '敵CRI防R2',
       enemyCriEvasionR1: '敵CRI避R1',
+      enemyCriEvasionR2: '敵CRI避R2',
     };
     return labels[field] || field;
   };
@@ -249,21 +251,22 @@ function SimulationTable({
             const bullet = bullets.find((b) => b.id === hit.bulletId);
             const b = hit.buffStateBefore;
             const isYang = bullet?.yinYang === '陽気';
-            const atk = isYang
-              ? b.yangAttackR1 + b.yangAttackR2
-              : b.yinAttackR1 + b.yinAttackR2;
-            const eDef = isYang
-              ? b.enemyYangDefR1 + b.enemyYangDefR2
-              : b.enemyYinDefR1 + b.enemyYinDefR2;
-            
-            // 防御表示のロジック
+            // 攻撃・防御の表示用テキスト生成
+            const atkR1 = isYang ? b.yangAttackR1 : b.yinAttackR1;
+            const atkR2 = isYang ? b.yangAttackR2 : b.yinAttackR2;
+            const atkDisplay = `${atkR1 >= 0 ? '+' : ''}${atkR1}/${atkR2 >= 0 ? '+' : ''}${atkR2}`;
+
+            const eDefR1raw = isYang ? b.enemyYangDefR1 : b.enemyYinDefR1;
+            const eDefR2raw = isYang ? b.enemyYangDefR2 : b.enemyYinDefR2;
+
             let eDefDisplay: string;
-            if (hit.isFullBreakBefore) {
-              eDefDisplay = 'FB';
+            if (hit.isFullBreak) {
+              // FB中は強制的にR1が-10、R2が0として計算される
+              eDefDisplay = `-10/0 (FB)`;
             } else if (bullet?.isPenetration) {
               eDefDisplay = '貫通';
             } else {
-              eDefDisplay = eDef > 0 ? `+${eDef}` : String(eDef);
+              eDefDisplay = `${eDefR1raw >= 0 ? '+' : ''}${eDefR1raw}/${eDefR2raw >= 0 ? '+' : ''}${eDefR2raw}`;
             }
 
             return (
@@ -326,7 +329,7 @@ function SimulationTable({
                 <td className={`${tdBase} relative`}>
                   <div className="flex items-center gap-1">
                     <span className="text-[10px] text-gray-500 flex flex-col leading-tight">
-                      <span>自攻{atk > 0 ? `+${atk}` : atk}</span>
+                      <span>自攻{atkDisplay}</span>
                       <span>敵防{eDefDisplay}</span>
                     </span>
                     <button

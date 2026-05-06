@@ -244,7 +244,9 @@ function resetEnemyBuffs(buffs: BuffStages): BuffStages {
     enemyEvasionR1: 0,
     enemyEvasionR2: 0,
     enemyCriDefR1: 0,
+    enemyCriDefR2: 0,
     enemyCriEvasionR1: 0,
+    enemyCriEvasionR2: 0,
   };
 }
 

@@ -6,6 +6,8 @@ interface Props {
   r2: number;
   r1Min?: number;
   r1Max?: number;
+  r2Min?: number;
+  r2Max?: number;
   onChangeR1: (v: number) => void;
   onChangeR2: (v: number) => void;
 }
@@ -23,6 +25,8 @@ export default function BuffRankInput({
   r2,
   r1Min = -10,
   r1Max = 10,
+  r2Min = 0,
+  r2Max = 10,
   onChangeR1,
   onChangeR2,
 }: Props) {
@@ -48,10 +52,10 @@ export default function BuffRankInput({
         <span className="text-xs text-gray-400 dark:text-gray-500">R2</span>
         <input
           type="number"
-          min={0}
-          max={10}
+          min={r2Min}
+          max={r2Max}
           value={r2}
-          onChange={(e) => onChangeR2(clamp(Number(e.target.value), 0, 10))}
+          onChange={(e) => onChangeR2(clamp(Number(e.target.value), r2Min, r2Max))}
           className={inputCls}
         />
       </div>

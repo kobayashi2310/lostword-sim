@@ -10,7 +10,9 @@ import type {
 import {
   calcTotalChargeMult,
   combinedCriAttackR1,
+  combinedCriAttackR2,
   combinedCriHitR1,
+  combinedCriHitR2,
   combinedHitRateR1,
   combinedHitRateR2,
 } from '@/types';
@@ -244,10 +246,11 @@ export function calcSingleHitDamage(
   // CRI攻撃バフへの能力ボーナス
   const abilityBonus = getAbilityBuffBonus(selfAilments, selfStats.ability);
   const criAttackR1 = combinedCriAttackR1(buffs);
+  const criAttackR2 = combinedCriAttackR2(buffs);
   const combinedCriAttackR1Val = clampR1(criAttackR1 + abilityBonus['陽攻・陰攻・CRI攻撃・CRI命中']);
 
   const critMult = isCrit
-    ? getCritMultiplier(combinedCriAttackR1Val, buffs.selfCriAttackR2)
+    ? getCritMultiplier(combinedCriAttackR1Val, criAttackR2)
     : 1;
 
   const bonusMult =
@@ -340,7 +343,7 @@ export function calcExpectedSingleHitDamage(
   const criRatePct = getEffectiveCriRate(
     bullet.criRate,
     combinedCriHitR1Val,
-    buffs.selfCriHitR2,
+    combinedCriHitR2(buffs),
     specialAttack,
   );
   const criRate = criRatePct / 100;

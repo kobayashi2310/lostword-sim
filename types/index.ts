@@ -246,16 +246,18 @@ export interface BuffStages {
 
   // ── 敵バフ/デバフ ──
   enemyYangDefR1: number; // -10〜10
-  enemyYangDefR2: number;
+  enemyYangDefR2: number; // -10〜0 (デバフのみ)
   enemyYinDefR1: number;
   enemyYinDefR2: number;
   // 敵回避バフ/デバフ
   enemyEvasionR1: number; // -10〜10
-  enemyEvasionR2: number;
+  enemyEvasionR2: number; // -10〜0 (デバフのみ)
   // 敵CRI防御バフ/デバフ
   enemyCriDefR1: number;      // -10〜10
+  enemyCriDefR2: number;      // -10〜0 (デバフのみ)
   // 敵CRI回避バフ/デバフ
   enemyCriEvasionR1: number;  // -10〜10
+  enemyCriEvasionR2: number;  // -10〜0 (デバフのみ)
 }
 
 // combined 命中 R1 = clamp(自身R1 − 敵回避R1, -10, 10)
@@ -270,9 +272,17 @@ export function combinedHitRateR2(b: BuffStages): number {
 export function combinedCriAttackR1(b: BuffStages): number {
   return Math.max(-10, Math.min(10, b.selfCriAttackR1 - b.enemyCriDefR1));
 }
+// combined CRI攻撃 R2 = clamp(自身R2 − 敵CRI防御R2, 0, 10)
+export function combinedCriAttackR2(b: BuffStages): number {
+  return Math.max(0, Math.min(10, b.selfCriAttackR2 - b.enemyCriDefR2));
+}
 // combined CRI命中 R1 = clamp(自身R1 − 敵CRI回避R1, -10, 10)
 export function combinedCriHitR1(b: BuffStages): number {
   return Math.max(-10, Math.min(10, b.selfCriHitR1 - b.enemyCriEvasionR1));
+}
+// combined CRI命中 R2 = clamp(自身R2 − 敵CRI回避R2, 0, 10)
+export function combinedCriHitR2(b: BuffStages): number {
+  return Math.max(0, Math.min(10, b.selfCriHitR2 - b.enemyCriEvasionR2));
 }
 
 // ============================================================

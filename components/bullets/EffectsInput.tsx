@@ -18,7 +18,16 @@ interface Props {
   onChange: (effects: BulletEffect[]) => void;
 }
 
-type EffectKind = '必中' | '特効' | 'ブレイク' | '異常付与' | '自身バフ' | '対象デバフ';
+type EffectKind =
+  | '必中'
+  | '特効'
+  | 'ブレイク'
+  | '異常付与'
+  | '弾性弾'
+  | '爆破弾'
+  | '精密弾'
+  | '自身バフ'
+  | '対象デバフ';
 
 const selectCls =
   'bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white text-xs px-1 py-0.5';
@@ -43,6 +52,12 @@ function newEffect(kind: EffectKind): BulletEffect {
         target: 'enemy',
         probability: 100,
       };
+    case '弾性弾':
+      return { kind: '弾性弾' };
+    case '爆破弾':
+      return { kind: '爆破弾' };
+    case '精密弾':
+      return { kind: '精密弾' };
     case '自身バフ':
       return {
         kind: '自身バフ',
@@ -245,17 +260,26 @@ export default function EffectsInput({ effects, onChange }: Props) {
 
       <div className="flex gap-1 flex-wrap">
         {(
-          ['必中', '特効', 'ブレイク', '異常付与', '自身バフ', '対象デバフ'] as EffectKind[]
+          [
+            '必中',
+            '特効',
+            '弾性弾',
+            '爆破弾',
+            '精密弾',
+            'ブレイク',
+            '異常付与',
+            '自身バフ',
+            '対象デバフ',
+          ] as EffectKind[]
         ).map((k) => (
-            <button
-              key={k}
-              onClick={() => add(k)}
-              className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded text-gray-700 dark:text-gray-300 transition-colors"
-            >
-              + {k}
-            </button>
-          ),
-        )}
+          <button
+            key={k}
+            onClick={() => add(k)}
+            className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded text-gray-700 dark:text-gray-300 transition-colors"
+          >
+            + {k}
+          </button>
+        ))}
       </div>
     </div>
   );

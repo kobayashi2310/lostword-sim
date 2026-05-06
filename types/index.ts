@@ -97,6 +97,18 @@ export interface EffectSpecialAttack {
   readonly kind: '特効';
 }
 
+export interface EffectElastic {
+  readonly kind: '弾性弾';
+}
+
+export interface EffectExplosive {
+  readonly kind: '爆破弾';
+}
+
+export interface EffectPrecision {
+  readonly kind: '精密弾';
+}
+
 export interface EffectBreak {
   readonly kind: 'ブレイク';
   readonly breakType: BreakEffectType;
@@ -126,6 +138,9 @@ export interface EffectEnemyDebuff {
 export type BulletEffect =
   | EffectMustHit
   | EffectSpecialAttack
+  | EffectElastic
+  | EffectExplosive
+  | EffectPrecision
   | EffectBreak
   | EffectInflictAilment
   | EffectSelfBuff

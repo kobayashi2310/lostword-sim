@@ -368,6 +368,18 @@ export interface DamageBonus {
   disadvantageBonus: number;
   chargeEffects: ChargeEffect[];
   accumulationEffects: AccumulationEffect[];
+  resonanceEffects: ResonanceEffect[];
+}
+
+export type ResonanceKind =
+  | 'ダメージアップ'
+  | 'CRI時ダメージアップ'
+  | '攻撃時CRI率'
+  | '速力';
+
+export interface ResonanceEffect {
+  kind: ResonanceKind;
+  value: number; // %
 }
 
 export type AccumulationTarget =
@@ -396,6 +408,7 @@ export function createDefaultDamageBonus(): DamageBonus {
     disadvantageBonus: 0,
     chargeEffects: [],
     accumulationEffects: [],
+    resonanceEffects: [],
   };
 }
 

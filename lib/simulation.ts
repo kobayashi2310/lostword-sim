@@ -156,7 +156,9 @@ function makeBuffChangeLabel(field: keyof BuffStages, delta: number): string {
     selfCriHitR1: '自身CRI命中R1',
     selfCriHitR2: '自身CRI命中R2',
     enemyCriDefR1: '敵CRI防御R1',
+    enemyCriDefR2: '敵CRI防御R2',
     enemyCriEvasionR1: '敵CRI回避R1',
+    enemyCriEvasionR2: '敵CRI回避R2',
   };
   const sign = delta >= 0 ? '+' : '';
   return `${labels[field]} ${sign}${delta}`;
@@ -433,10 +435,7 @@ function runStaticBulletCalculation(config: SimulationConfig): {
 
   const isInitialFullBreak =
     enemyStats.hasBarriers && (enemyStats.isFullBreak ?? false);
-  const selfAilments = getAilmentStacks(
-    selfStats.barriers,
-    selfStats.ability.nullifyAilments,
-  );
+  const selfAilments = getAilmentStacks(selfStats.barriers);
 
   const enemyAilments =
     enemyStats.hasBarriers && !isInitialFullBreak

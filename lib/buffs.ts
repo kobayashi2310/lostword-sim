@@ -79,11 +79,12 @@ export function getEffectiveCriRate(
   criHitR1: number,
   criHitR2: number,
   specialAttack: boolean,
+  resonanceCriRateBonus: number = 0,
 ): number {
   if (specialAttack) return 100;
   const mult =
     getHitCriHitMultiplier(criHitR1) * getHitCriHitMultiplier(criHitR2);
-  return Math.min(baseCriRate * mult, 100);
+  return Math.min((baseCriRate + resonanceCriRateBonus) * mult, 100);
 }
 
 // ============================================================

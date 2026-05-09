@@ -66,13 +66,14 @@ export function calcAttackPower(
     disadvantageBonus: 0,
     chargeEffects: [],
     accumulationEffects: [],
+    resonanceEffects: [],
   },
 ): number {
   const isYang = bullet.yinYang === '陽気';
   
   // 蓄積値の集計
   const getAcc = (target: string) => 
-    damageBonus.accumulationEffects
+    (damageBonus.accumulationEffects || [])
       .filter(e => e.targetStat === target)
       .reduce((sum, e) => sum + Math.floor((e.sourceValue * e.rate) / 100), 0);
 
@@ -111,6 +112,13 @@ export function calcAttackPower(
     getAtkDefSpdMultiplier(buffs.speedR2) *
     speedAilmentMult;
 
+  // 防御補正 (斬裂弾の後に使うため、ここで計算)
+  // 共鳴補正 (速力)
+  const speedResonanceBonus = (damageBonus.resonanceEffects || [])
+    .filter((e) => e.kind === '速力')
+    .reduce((sum, e) => sum + e.value, 0);
+  const speedResonanceMult = 1 + speedResonanceBonus / 100;
+
   // 自身防御 (基礎値 + 蓄積) * バフ
   const rawDef = isYang ? selfStats.yangDefense : selfStats.yinDefense;
   const baseSelfDef = rawDef + getAcc(isYang ? 'yangDefense' : 'yinDefense');
@@ -128,7 +136,7 @@ export function calcAttackPower(
 
   const slashComponent =
     bullet.slashPercent > 0
-      ? baseSpeed * speedMult * (bullet.slashPercent / 100)
+      ? baseSpeed * speedMult * speedResonanceMult * (bullet.slashPercent / 100)
       : 0;
 
   const hardComponent =
@@ -214,6 +222,7 @@ export function calcSingleHitDamage(
     disadvantageBonus: 0,
     chargeEffects: [],
     accumulationEffects: [],
+    resonanceEffects: [],
   },
   isFullBreak: boolean = false,
   enemyAilments: Record<BarrierAilmentType, number> = {
@@ -258,7 +267,19 @@ export function calcSingleHitDamage(
     (damageBonus.elementBonus[bullet.element] ?? 0) / 100 +
     (damageBonus.bulletKindBonus[bullet.bulletKind] ?? 0) / 100;
   
-  const chargeMult = 1 + calcTotalChargeMult(damageBonus.chargeEffects ?? []);
+  const chargeMult = 1 + calcTotalChargeMult(damageBonus.chargeEffects || []);
+
+  // 共鳴補正 (ダメージアップ / CRI時ダメージアップ)
+  const resDamageBonus = (damageBonus.resonanceEffects || [])
+    .filter((e) => e.kind === 'ダメージアップ')
+    .reduce((sum, e) => sum + e.value, 0);
+  const resCriDamageBonus = isCrit
+    ? (damageBonus.resonanceEffects || [])
+        .filter((e) => e.kind === 'CRI時ダメージアップ')
+        .reduce((sum, e) => sum + e.value, 0)
+    : 0;
+  
+  const resonanceMult = (1 + resDamageBonus / 100) * (1 + resCriDamageBonus / 100);
 
   return Math.floor(
     bullet.power *
@@ -268,7 +289,8 @@ export function calcSingleHitDamage(
       elementalMult *
       critMult *
       bonusMult *
-      chargeMult,
+      chargeMult *
+      resonanceMult,
   );
 }
 
@@ -291,6 +313,8 @@ export function calcExpectedSingleHitDamage(
     advantageBonus: 0,
     disadvantageBonus: 0,
     chargeEffects: [],
+    accumulationEffects: [],
+    resonanceEffects: [],
   },
   isFullBreak: boolean = false,
   enemyAilments: Record<BarrierAilmentType, number> = {
@@ -340,11 +364,17 @@ export function calcExpectedSingleHitDamage(
   const criHitR1 = combinedCriHitR1(buffs);
   const combinedCriHitR1Val = clampR1(criHitR1 + abilityBonus['陽攻・陰攻・CRI攻撃・CRI命中']);
 
+  // 共鳴補正 (攻撃時CRI率)
+  const resCriRateBonus = (damageBonus.resonanceEffects || [])
+    .filter((e) => e.kind === '攻撃時CRI率')
+    .reduce((sum, e) => sum + e.value, 0);
+
   const criRatePct = getEffectiveCriRate(
     bullet.criRate,
     combinedCriHitR1Val,
     combinedCriHitR2(buffs),
     specialAttack,
+    resCriRateBonus,
   );
   const criRate = criRatePct / 100;
 
@@ -391,6 +421,8 @@ export function calcStageTotalExpected(
     advantageBonus: 0,
     disadvantageBonus: 0,
     chargeEffects: [],
+    accumulationEffects: [],
+    resonanceEffects: [],
   },
   isFullBreak: boolean = false,
   enemyAilments: Record<BarrierAilmentType, number> = {

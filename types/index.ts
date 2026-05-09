@@ -422,6 +422,7 @@ export interface SimulationConfig {
   enemyWeakness: EnemyWeaknessConfig;
   specialAttackActive: Record<number, boolean>;
   damageBonus: DamageBonus;
+  activeBulletCount: number; // 使用する段数 (1-6)
 }
 
 // ============================================================

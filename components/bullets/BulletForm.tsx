@@ -8,6 +8,7 @@ import EffectsInput from './EffectsInput';
 interface Props {
   bullet: Bullet;
   onChange: (bullet: Bullet) => void;
+  isActive?: boolean;
 }
 
 const ELEMENT_COLORS: Record<string, string> = {
@@ -27,7 +28,7 @@ const selectCls =
 const numInputCls =
   'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white text-xs px-1.5 py-0.5 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400';
 
-export default function BulletForm({ bullet, onChange }: Props) {
+export default function BulletForm({ bullet, onChange, isActive = true }: Props) {
   const [expanded, setExpanded] = useState(false);
 
   const set =
@@ -36,13 +37,27 @@ export default function BulletForm({ bullet, onChange }: Props) {
       onChange({ ...bullet, [field]: value });
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+    <div
+      className={`
+        border rounded-lg overflow-hidden transition-all
+        ${
+          isActive
+            ? 'border-gray-200 dark:border-gray-700'
+            : 'border-gray-100 dark:border-gray-800 opacity-50 grayscale-[0.5]'
+        }
+      `}
+    >
       {/* ヘッダー行（折りたたみ） */}
       <button
         className="w-full flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-left transition-colors"
         onClick={() => setExpanded((v) => !v)}
       >
         <span className="text-gray-400 text-xs w-4 shrink-0">{bullet.id}</span>
+        {!isActive && (
+          <span className="text-[10px] bg-gray-200 dark:bg-gray-700 text-gray-500 px-1 rounded">
+            未発動
+          </span>
+        )}
         <span
           className={`text-sm font-semibold shrink-0 ${ELEMENT_COLORS[bullet.element] ?? ''}`}
         >

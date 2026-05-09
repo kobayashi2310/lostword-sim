@@ -269,9 +269,11 @@ function runHitOrderSimulation(config: SimulationConfig): {
     enemyWeakness,
     specialAttackActive,
     damageBonus,
+    activeBulletCount,
   } = config;
 
-  const bulletMap = new Map<number, Bullet>(bullets.map((b) => [b.id, b]));
+  const activeBullets = bullets.filter((b) => b.id <= activeBulletCount);
+  const bulletMap = new Map<number, Bullet>(activeBullets.map((b) => [b.id, b]));
 
   let currentBuffs: BuffStages = { ...config.initialBuffs };
   let isFullBreak = enemyStats.hasBarriers && (enemyStats.isFullBreak ?? false);

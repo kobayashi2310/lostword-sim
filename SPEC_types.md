@@ -84,13 +84,18 @@
 - `advantageBonus` / `disadvantageBonus`: 相性補正の強化 (%)
 - `chargeEffects`: 蓄力効果のリスト
 - `accumulationEffects`: 蓄積効果（固定値ステータス加算）のリスト
+- `resonanceEffects`: 共鳴効果のリスト（別枠乗算・基礎加算）
 
-### `AccumulationEffect`
-- `target`: 加算対象のステータス（陽攻/陰攻/速力/陽防/陰防）
-- `value`: 加算する固定値
-- `label`: UI表示用のラベル
+### `ResonanceEffect`
+- `kind`: `'ダメージアップ' | 'CRI時ダメージアップ' | '攻撃時CRI率' | '速力'`
+- `value`: 補正値 (%)
 
-## 6. シミュレーション結果 (SimulationResult)
+## 6. シミュレーション設定 (SimulationConfig)
+シミュレーションの全入力を保持する構造です。
+- `activeBulletCount`: 使用するバレットの段数 (1〜6)。指定段数以降は無視されます。
+- (その他の既存フィールド...)
+
+## 7. シミュレーション結果 (SimulationResult)
 
 シミュレーション実行後に返される構造です。
 

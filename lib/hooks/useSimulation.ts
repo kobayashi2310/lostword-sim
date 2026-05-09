@@ -44,6 +44,7 @@ export function useSimulation() {
     DEFAULT_HIT_ORDER_TEXT,
   );
   const [isGirlReincarnation, setIsGirlReincarnation] = useState(false);
+  const [activeBulletCount, setActiveBulletCount] = useState(6);
 
   const [enemyWeakness, setEnemyWeakness] = useState<EnemyWeaknessConfig>(
     createDefaultWeakness,
@@ -104,6 +105,7 @@ export function useSimulation() {
           enemyWeakness,
           specialAttackActive,
           damageBonus,
+          activeBulletCount,
         }),
       );
     }, 300);
@@ -117,6 +119,7 @@ export function useSimulation() {
     bullets,
     hitOrderText,
     isGirlReincarnation,
+    activeBulletCount,
     enemyWeakness,
     specialAttackActive,
     damageBonus,
@@ -130,6 +133,7 @@ export function useSimulation() {
     bullets,
     hitOrderText,
     isGirlReincarnation,
+    activeBulletCount,
     enemyWeakness,
     specialAttackActive,
     damageBonus,
@@ -142,6 +146,7 @@ export function useSimulation() {
     setBullets,
     setHitOrderText,
     setIsGirlReincarnation,
+    setActiveBulletCount,
     setEnemyWeakness,
     setSpecialAttackActive,
     setDamageBonus,

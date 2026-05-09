@@ -270,6 +270,22 @@ export default function SpecsPage() {
             </p>
           </div>
         </section>
+
+        <section className="mb-10">
+          <h3 className="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-400">
+            9. バレット使用段数の制限
+          </h3>
+          <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+            <p>
+              ブースト段階などに応じて、使用するバレットの段数（1〜6）を制限できます。
+            </p>
+            <ul className="list-disc pl-6 space-y-1">
+              <li>設定された段数を超えるバレットは「未発動」として扱われます。</li>
+              <li>「未発動」の段はダメージを与えず、バフ・デバフ付与や結界ブレイクも一切行われません。</li>
+              <li>ヒット順設定に未発動の段が含まれている場合も、そのヒットはスキップされます。</li>
+            </ul>
+          </div>
+        </section>
       </main>
     </div>
   );

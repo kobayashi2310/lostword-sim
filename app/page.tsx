@@ -40,6 +40,8 @@ export default function Home() {
     setHitOrderText,
     isGirlReincarnation,
     setIsGirlReincarnation,
+    activeBulletCount,
+    setActiveBulletCount,
     enemyWeakness,
     setEnemyWeakness,
     specialAttackActive,
@@ -98,7 +100,11 @@ export default function Home() {
         return (
           <div className="max-w-2xl">
             <h2 className={sectionTitle}>バレット設定</h2>
-            <BulletListForm bullets={bullets} onChange={setBullets} />
+            <BulletListForm
+              bullets={bullets}
+              onChange={setBullets}
+              activeBulletCount={activeBulletCount}
+            />
           </div>
         );
       case 'hitorder':
@@ -185,6 +191,8 @@ export default function Home() {
     <OptionsBar
       isGirlReincarnation={isGirlReincarnation}
       onGirlReincarnationChange={setIsGirlReincarnation}
+      activeBulletCount={activeBulletCount}
+      onActiveBulletCountChange={setActiveBulletCount}
       errorCount={validationErrors.length}
       hasResult={!!result}
     />

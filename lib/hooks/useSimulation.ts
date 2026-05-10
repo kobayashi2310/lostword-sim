@@ -25,6 +25,11 @@ import {
   runSimulation,
   validateHitOrder,
 } from '@/lib/simulation';
+import {
+  getActiveCountFromBoost,
+  validateBoostPattern,
+  type BoostLevel,
+} from '@/types';
 
 // 特効アクティブ状態の初期化
 function initSpecialAttackActive(bullets: Bullet[]): Record<number, boolean> {
@@ -44,7 +49,13 @@ export function useSimulation() {
     DEFAULT_HIT_ORDER_TEXT,
   );
   const [isGirlReincarnation, setIsGirlReincarnation] = useState(false);
-  const [activeBulletCount, setActiveBulletCount] = useState(6);
+
+  // ブースト関連の状態
+  const [boostLevel, setBoostLevel] = useState<BoostLevel>(3);
+  const [boostPattern, setBoostPattern] = useState<string>('1-3-1');
+
+  // 発動段数を計算
+  const activeBulletCount = getActiveCountFromBoost(boostPattern, boostLevel);
 
   const [enemyWeakness, setEnemyWeakness] = useState<EnemyWeaknessConfig>(
     createDefaultWeakness,
@@ -87,6 +98,11 @@ export function useSimulation() {
         ...buffValidationMessages(buffs),
         ...validateHitOrder(bullets, hitOrder).map((e) => e.message),
       ];
+
+      // ブースト型のバリデーション
+      const boostError = validateBoostPattern(boostPattern);
+      if (boostError) errors.push(boostError);
+
       setValidationErrors(errors);
 
       if (errors.length > 0) {
@@ -119,6 +135,8 @@ export function useSimulation() {
     bullets,
     hitOrderText,
     isGirlReincarnation,
+    boostLevel,
+    boostPattern,
     activeBulletCount,
     enemyWeakness,
     specialAttackActive,
@@ -133,6 +151,8 @@ export function useSimulation() {
     bullets,
     hitOrderText,
     isGirlReincarnation,
+    boostLevel,
+    boostPattern,
     activeBulletCount,
     enemyWeakness,
     specialAttackActive,
@@ -146,7 +166,8 @@ export function useSimulation() {
     setBullets,
     setHitOrderText,
     setIsGirlReincarnation,
-    setActiveBulletCount,
+    setBoostLevel,
+    setBoostPattern,
     setEnemyWeakness,
     setSpecialAttackActive,
     setDamageBonus,

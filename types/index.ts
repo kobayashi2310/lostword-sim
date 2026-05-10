@@ -426,6 +426,58 @@ export interface SimulationConfig {
 }
 
 // ============================================================
+// ブースト関連
+// ============================================================
+
+export type BoostLevel = 0 | 1 | 2 | 3;
+
+/** 代表的なブースト型リスト */
+export const TYPICAL_BOOST_PATTERNS = [
+  '1-3-1',
+  '1-1-3',
+  '2-2-1',
+  '1-2-2',
+  '2-1-2',
+  '3-1-1',
+] as const;
+
+/**
+ * ブースト構成（例: "1-3-1"）を検証する
+ * 合計が5 (0bの1段と合わせて全6段) になる必要がある
+ */
+export function validateBoostPattern(pattern: string): string | null {
+  const parts = pattern.split('-').map(Number);
+  if (parts.length !== 3 || parts.some(isNaN)) {
+    return 'ブースト型は "1-3-1" のような形式で入力してください。';
+  }
+  const total = parts.reduce((a, b) => a + b, 0);
+  if (total !== 5) {
+    return `ブースト追加段数の合計は 5 である必要があります（現在の合計: ${total}）。`;
+  }
+  return null;
+}
+
+/**
+ * ブースト構成（例: "1-3-1"）から各ブースト段階での発動段数を計算する
+ */
+export function getActiveCountFromBoost(
+  pattern: string,
+  level: BoostLevel,
+): number {
+  if (level === 0) return 1;
+
+  const parts = pattern.split('-').map(Number);
+  if (parts.length !== 3 || parts.some(isNaN)) {
+    return level + 1; // フォールバック: 0b=1, 1b=2, 2b=3, 3b=4
+  }
+
+  const [b1, b2, b3] = parts;
+  if (level === 1) return 1 + b1;
+  if (level === 2) return 1 + b1 + b2;
+  return 1 + b1 + b2 + b3;
+}
+
+// ============================================================
 // シミュレーション結果
 // ============================================================
 

@@ -40,8 +40,11 @@ export default function Home() {
     setHitOrderText,
     isGirlReincarnation,
     setIsGirlReincarnation,
+    boostLevel,
+    setBoostLevel,
+    boostPattern,
+    setBoostPattern,
     activeBulletCount,
-    setActiveBulletCount,
     enemyWeakness,
     setEnemyWeakness,
     specialAttackActive,
@@ -104,6 +107,8 @@ export default function Home() {
               bullets={bullets}
               onChange={setBullets}
               activeBulletCount={activeBulletCount}
+              boostPattern={boostPattern}
+              onBoostPatternChange={setBoostPattern}
             />
           </div>
         );
@@ -191,8 +196,9 @@ export default function Home() {
     <OptionsBar
       isGirlReincarnation={isGirlReincarnation}
       onGirlReincarnationChange={setIsGirlReincarnation}
+      boostLevel={boostLevel}
+      onBoostLevelChange={setBoostLevel}
       activeBulletCount={activeBulletCount}
-      onActiveBulletCountChange={setActiveBulletCount}
       errorCount={validationErrors.length}
       hasResult={!!result}
     />

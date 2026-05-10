@@ -1,10 +1,13 @@
 'use client';
 
+import type { BoostLevel } from '@/types';
+
 interface Props {
   isGirlReincarnation: boolean;
   onGirlReincarnationChange: (v: boolean) => void;
+  boostLevel: BoostLevel;
+  onBoostLevelChange: (v: BoostLevel) => void;
   activeBulletCount: number;
-  onActiveBulletCountChange: (v: number) => void;
   errorCount: number;
   hasResult: boolean;
 }
@@ -12,14 +15,16 @@ interface Props {
 export default function OptionsBar({
   isGirlReincarnation,
   onGirlReincarnationChange,
+  boostLevel,
+  onBoostLevelChange,
   activeBulletCount,
-  onActiveBulletCountChange,
   errorCount,
   hasResult,
 }: Props) {
   return (
     <div className="shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 flex flex-col gap-2">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-6">
+        {/* 少女転生 */}
         <label className="flex items-center gap-1.5 cursor-pointer">
           <input
             type="checkbox"
@@ -34,28 +39,37 @@ export default function OptionsBar({
 
         <div className="h-4 w-px bg-gray-200 dark:border-gray-700" />
 
+        {/* ブーストレベル */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            使用段数:
+          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+            Boost:
           </span>
           <div className="flex items-center bg-gray-100 dark:bg-gray-900 rounded p-0.5">
-            {[1, 2, 3, 4, 5, 6].map((num) => (
+            {[0, 1, 2, 3].map((num) => (
               <button
                 key={num}
-                onClick={() => onActiveBulletCountChange(num)}
+                onClick={() => onBoostLevelChange(num as BoostLevel)}
                 className={`
-                  w-7 h-7 text-xs font-bold rounded transition-colors
+                  w-8 h-7 text-xs font-bold rounded transition-colors
                   ${
-                    activeBulletCount === num
+                    boostLevel === num
                       ? 'bg-blue-500 text-white shadow-sm'
                       : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
                   }
                 `}
               >
-                {num}
+                {num}b
               </button>
             ))}
           </div>
+        </div>
+
+        {/* 確定段数表示 */}
+        <div className="flex items-center gap-1.5 text-xs">
+          <span className="text-gray-400">発動:</span>
+          <span className="font-bold text-blue-600 dark:text-blue-400">
+            {activeBulletCount}段
+          </span>
         </div>
       </div>
 

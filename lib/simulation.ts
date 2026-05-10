@@ -16,6 +16,7 @@ import type {
 } from '@/types';
 import { getAdvantageForBullet } from '@/types';
 import { applySelfBuff, applyEnemyDebuff, getAilmentStacks } from './buffs';
+import { getBreakTargetAilment, inflictAilment } from './barriers';
 import { calcExpectedSingleHitDamage, calcStageTotalExpected } from './damage';
 import { calcWeightedMultipliers } from './weighted';
 
@@ -30,54 +31,6 @@ function hasMustHit(effects: BulletEffect[]): boolean {
 /** バレットが特効能力を持つか */
 export function hasSpecialAttackCapability(effects: BulletEffect[]): boolean {
   return effects.some((e) => e.kind === '特効');
-}
-
-/** ブレイク対象の異常型を取得 */
-function getBreakTargetAilment(
-  effects: BulletEffect[],
-): BarrierAilmentType | null {
-  const breakEffect = effects.find((e) => e.kind === 'ブレイク') as
-    | EffectBreak
-    | undefined;
-  if (!breakEffect) return null;
-  const mapping: Record<BreakEffectType, BarrierAilmentType> = {
-    過毒: '毒霧',
-    焼却: '燃焼',
-    氷解: '凍結',
-    放電: '帯電',
-    閃光: '暗闇',
-  };
-  return mapping[breakEffect.breakType];
-}
-
-// ============================================================
-// 結界異常付与ロジック
-// ============================================================
-
-/**
- * 結界配列に異常を付与する。
- * 「1から付与。1が埋まっている場合は後ろへずらす。すべて埋まっている場合は付与不可」
- */
-function inflictAilment(
-  barriers: BarrierStatus[],
-  ailmentType: BarrierAilmentType,
-): BarrierStatus[] {
-  const existingAilments = barriers
-    .map((b) => b.ailment)
-    .filter((a): a is BarrierAilmentType => a !== null);
-
-  // すでに全スロットが埋まっている場合は付与できない
-  if (existingAilments.length >= barriers.length) {
-    return barriers;
-  }
-
-  // 新しい異常を先頭に追加し、既存のものを後ろに並べる
-  const nextAilments = [ailmentType, ...existingAilments];
-
-  // 元の配列と同じ長さになるように null で埋める
-  return barriers.map((_, i) => ({
-    ailment: i < nextAilments.length ? nextAilments[i] : null,
-  }));
 }
 
 // ============================================================

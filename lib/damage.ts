@@ -24,6 +24,11 @@ import {
   getAbilityBuffBonus,
   clampR1,
 } from './buffs';
+import {
+  calculateEffectiveStatMult,
+  getAccumulationSum,
+  isAilmentNullified,
+} from './stats';
 
 // ============================================================
 // 属性相性倍率
@@ -70,105 +75,54 @@ export function calcAttackPower(
   },
 ): number {
   const isYang = bullet.yinYang === '陽気';
-
-  // 蓄積値の集計
-  const getAcc = (target: string) =>
-    (damageBonus.accumulationEffects || [])
-      .filter((e) => e.targetStat === target)
-      .reduce((sum, e) => sum + Math.floor((e.sourceValue * e.rate) / 100), 0);
-
-  // 能力によるバフボーナスを計算
   const abilityBonus = getAbilityBuffBonus(selfAilments, selfStats.ability);
 
-  // ステータス倍率の計算 (基礎値 + 蓄積) * バフ
-  const rawAtk = isYang ? selfStats.yangAttack : selfStats.yinAttack;
-  const baseAtk = rawAtk + getAcc(isYang ? 'yangAttack' : 'yinAttack');
-
-  const atkR1 = isYang ? buffs.yangAttackR1 : buffs.yinAttackR1;
-  const atkR2 = isYang ? buffs.yangAttackR2 : buffs.yinAttackR2;
-  const combinedAtkR1 = clampR1(
-    atkR1 + abilityBonus['陽攻・陰攻・CRI攻撃・CRI命中'],
+  // 1. 攻撃力
+  const { value: attackPower } = calculateEffectiveStatMult(
+    isYang ? selfStats.yangAttack : selfStats.yinAttack,
+    isYang ? buffs.yangAttackR1 : buffs.yinAttackR1,
+    isYang ? buffs.yangAttackR2 : buffs.yinAttackR2,
+    isYang ? selfAilments.毒霧 : selfAilments.燃焼,
+    isAilmentNullified(selfStats.ability, isYang ? '毒霧' : '燃焼'),
+    abilityBonus['陽攻・陰攻・CRI攻撃・CRI命中'],
+    getAccumulationSum(damageBonus, isYang ? 'yangAttack' : 'yinAttack'),
   );
 
-  // 結界異常デバフ (燃焼は陰攻、毒霧は陽攻)
-  const isPoisonNullified =
-    selfStats.ability.nullifyAilments.includes('毒霧') ||
-    selfStats.ability.convertAilments.some((c) => c.ailment === '毒霧');
-  const isBurnNullified =
-    selfStats.ability.nullifyAilments.includes('燃焼') ||
-    selfStats.ability.convertAilments.some((c) => c.ailment === '燃焼');
-
-  const atkAilmentMult = isYang
-    ? isPoisonNullified
-      ? 1.0
-      : Math.pow(0.875, selfAilments.毒霧)
-    : isBurnNullified
-      ? 1.0
-      : Math.pow(0.875, selfAilments.燃焼);
-
-  const atkMult =
-    getAtkDefSpdMultiplier(combinedAtkR1) *
-    getAtkDefSpdMultiplier(atkR2) *
-    atkAilmentMult;
-
-  // 速力 (基礎値 + 蓄積) * バフ
-  const baseSpeed = selfStats.speed + getAcc('speed');
-  const combinedSpeedR1 = clampR1(
-    buffs.speedR1 + abilityBonus['速力・命中・回避'],
+  // 2. 速力 (斬裂弾用)
+  const { value: speed } = calculateEffectiveStatMult(
+    selfStats.speed,
+    buffs.speedR1,
+    buffs.speedR2,
+    selfAilments.凍結,
+    isAilmentNullified(selfStats.ability, '凍結'),
+    abilityBonus['速力・命中・回避'],
+    getAccumulationSum(damageBonus, 'speed'),
   );
-  const isFreezeNullified =
-    selfStats.ability.nullifyAilments.includes('凍結') ||
-    selfStats.ability.convertAilments.some((c) => c.ailment === '凍結');
 
-  const speedAilmentMult = isFreezeNullified
-    ? 1.0
-    : Math.pow(0.875, selfAilments.凍結);
-  const speedMult =
-    getAtkDefSpdMultiplier(combinedSpeedR1) *
-    getAtkDefSpdMultiplier(buffs.speedR2) *
-    speedAilmentMult;
+  // 3. 自身防御 (硬質弾用)
+  const { value: selfDefense } = calculateEffectiveStatMult(
+    isYang ? selfStats.yangDefense : selfStats.yinDefense,
+    isYang ? buffs.selfYangDefR1 : buffs.selfYinDefR1,
+    isYang ? buffs.selfYangDefR2 : buffs.selfYinDefR2,
+    isYang ? selfAilments.毒霧 : selfAilments.燃焼,
+    isAilmentNullified(selfStats.ability, isYang ? '毒霧' : '燃焼'),
+    abilityBonus['陽防・陰防・CRI防御・CRI回避'],
+    getAccumulationSum(damageBonus, isYang ? 'yangDefense' : 'yinDefense'),
+  );
 
-  // 防御補正 (斬裂弾の後に使うため、ここで計算)
-  // 共鳴補正 (速力)
+  // 共鳴補正 (速力のみ別枠乗算あり)
   const speedResonanceBonus = (damageBonus.resonanceEffects || [])
     .filter((e) => e.kind === '速力')
     .reduce((sum, e) => sum + e.value, 0);
-  const speedResonanceMult = 1 + speedResonanceBonus / 100;
-
-  // 自身防御 (基礎値 + 蓄積) * バフ
-  const rawDef = isYang ? selfStats.yangDefense : selfStats.yinDefense;
-  const baseSelfDef = rawDef + getAcc(isYang ? 'yangDefense' : 'yinDefense');
-
-  const selfDefR1 = isYang ? buffs.selfYangDefR1 : buffs.selfYinDefR1;
-  const selfDefR2 = isYang ? buffs.selfYangDefR2 : buffs.selfYinDefR2;
-  const combinedSelfDefR1 = clampR1(
-    selfDefR1 + abilityBonus['陽防・陰防・CRI防御・CRI回避'],
-  );
-
-  const selfDefAilmentMult = isYang
-    ? isPoisonNullified
-      ? 1.0
-      : Math.pow(0.875, selfAilments.毒霧)
-    : isBurnNullified
-      ? 1.0
-      : Math.pow(0.875, selfAilments.燃焼);
-
-  const selfDefMult =
-    getAtkDefSpdMultiplier(combinedSelfDefR1) *
-    getAtkDefSpdMultiplier(selfDefR2) *
-    selfDefAilmentMult;
+  const effectiveSpeed = speed * (1 + speedResonanceBonus / 100);
 
   const slashComponent =
-    bullet.slashPercent > 0
-      ? baseSpeed * speedMult * speedResonanceMult * (bullet.slashPercent / 100)
-      : 0;
+    bullet.slashPercent > 0 ? effectiveSpeed * (bullet.slashPercent / 100) : 0;
 
   const hardComponent =
-    bullet.hardPercent > 0
-      ? baseSelfDef * selfDefMult * (bullet.hardPercent / 100)
-      : 0;
+    bullet.hardPercent > 0 ? selfDefense * (bullet.hardPercent / 100) : 0;
 
-  return baseAtk * atkMult + slashComponent + hardComponent;
+  return attackPower + slashComponent + hardComponent;
 }
 
 // ============================================================
@@ -192,51 +146,35 @@ export function calcEnemyDefense(
   const baseDef = isYang ? enemyStats.yangDefense : enemyStats.yinDefense;
 
   // 1. フルブレイク補正 (別枠乗算)
-  // フルブレイク時は防御デバフ10段階相当(1/4)の補正がかかる
   const fbMult = isFullBreak ? getAtkDefSpdMultiplier(-10) : 1.0;
 
-  // 2. Rankバフ・デバフ補正 (貫通弾はここを無視)
-  let rankMult = 1.0;
-  if (!bullet.isPenetration) {
-    if (isFullBreak) {
-      // フルブレイク中はRankバフ/デバフがリセットされているため1.0固定
-      // (CRI防御等の特殊なものは別関数で処理)
-      rankMult = 1.0;
-    } else {
-      // 通常時はRank1/Rank2バフ、および敵の能力バフを適用
-      const abilityBonus = getAbilityBuffBonus(
-        enemyAilments,
-        enemyStats.ability,
-      );
-      const defR1 = isYang ? buffs.enemyYangDefR1 : buffs.enemyYinDefR1;
-      const defR2 = isYang ? buffs.enemyYangDefR2 : buffs.enemyYinDefR2;
-      const combinedDefR1 = clampR1(
-        defR1 + abilityBonus['陽防・陰防・CRI防御・CRI回避'],
-      );
-      rankMult =
-        getAtkDefSpdMultiplier(combinedDefR1) * getAtkDefSpdMultiplier(defR2);
-    }
+  // 2. Rankバフ・デバフ・異常補正
+  let totalRankAilmentMult = 1.0;
+
+  if (bullet.isPenetration) {
+    // 貫通弾: Rank補正を無視し、異常デバフのみ適用
+    const isNullified = isAilmentNullified(
+      enemyStats.ability,
+      isYang ? '毒霧' : '燃焼',
+    );
+    const ailmentCount = isYang ? enemyAilments.毒霧 : enemyAilments.燃焼;
+    totalRankAilmentMult = isNullified ? 1.0 : Math.pow(0.875, ailmentCount);
+  } else {
+    // 通常弾: すべて適用
+    const abilityBonus = getAbilityBuffBonus(enemyAilments, enemyStats.ability);
+    const { multiplier } = calculateEffectiveStatMult(
+      0, // ベース値は後で掛けるため0
+      isYang ? buffs.enemyYangDefR1 : buffs.enemyYinDefR1,
+      isYang ? buffs.enemyYangDefR2 : buffs.enemyYinDefR2,
+      isYang ? enemyAilments.毒霧 : enemyAilments.燃焼,
+      isAilmentNullified(enemyStats.ability, isYang ? '毒霧' : '燃焼'),
+      abilityBonus['陽防・陰防・CRI防御・CRI回避'],
+      0,
+    );
+    totalRankAilmentMult = isFullBreak ? 1.0 : multiplier;
   }
 
-  // 3. 結界異常デバフ (燃焼は陰防、毒霧は陽防)
-  // 貫通弾でも恩恵を受けることができる
-  const isPoisonNullified =
-    enemyStats.ability.nullifyAilments.includes('毒霧') ||
-    enemyStats.ability.convertAilments.some((c) => c.ailment === '毒霧');
-  const isBurnNullified =
-    enemyStats.ability.nullifyAilments.includes('燃焼') ||
-    enemyStats.ability.convertAilments.some((c) => c.ailment === '燃焼');
-
-  const ailmentMult = isYang
-    ? isPoisonNullified
-      ? 1.0
-      : Math.pow(0.875, enemyAilments.毒霧)
-    : isBurnNullified
-      ? 1.0
-      : Math.pow(0.875, enemyAilments.燃焼);
-
-  // 最終的な防御力 = 基礎 × フルブレイク補正 × Rank補正 × 異常デバフ
-  return baseDef * fbMult * rankMult * ailmentMult;
+  return baseDef * fbMult * totalRankAilmentMult;
 }
 
 // ============================================================

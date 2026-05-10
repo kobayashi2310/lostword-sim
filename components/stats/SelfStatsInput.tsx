@@ -35,8 +35,10 @@ function StatRow({
 }
 
 export default function SelfStatsInput({ stats, onChange }: Props) {
-  const set = (field: keyof SelfStats) => (v: any) =>
-    onChange({ ...stats, [field]: v });
+  const set =
+    <K extends keyof SelfStats>(field: K) =>
+    (v: SelfStats[K]) =>
+      onChange({ ...stats, [field]: v });
 
   return (
     <div className="space-y-6">

@@ -55,7 +55,9 @@ export default function BuffRankInput({
           min={r2Min}
           max={r2Max}
           value={r2}
-          onChange={(e) => onChangeR2(clamp(Number(e.target.value), r2Min, r2Max))}
+          onChange={(e) =>
+            onChangeR2(clamp(Number(e.target.value), r2Min, r2Max))
+          }
           className={inputCls}
         />
       </div>

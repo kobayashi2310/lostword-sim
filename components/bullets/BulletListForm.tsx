@@ -22,7 +22,9 @@ export default function BulletListForm({
     onChange(bullets.map((b) => (b.id === updated.id ? updated : b)));
   };
 
-  const isCustom = !TYPICAL_BOOST_PATTERNS.includes(boostPattern as any);
+  const isCustom = !(TYPICAL_BOOST_PATTERNS as readonly string[]).includes(
+    boostPattern,
+  );
 
   return (
     <div className="space-y-4">

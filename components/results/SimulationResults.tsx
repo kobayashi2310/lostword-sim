@@ -55,7 +55,9 @@ function SummaryCards({ result }: { result: SimulationResult }) {
         <div className="text-lg font-bold text-gray-400 dark:text-gray-500 font-mono">
           {fmt(totalStaticDamage)}
         </div>
-        <div className="text-xs text-gray-400/70 mt-0.5">バフ変化なしの状態</div>
+        <div className="text-xs text-gray-400/70 mt-0.5">
+          バフ変化なしの状態
+        </div>
       </div>
       <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg px-3 py-3">
         <div className="text-xs text-purple-700 dark:text-purple-400 mb-1">
@@ -109,7 +111,9 @@ function StaticTable({
             const mustHit = bullet?.effects.some((e) => e.kind === '必中');
             const special = bullet?.effects.some((e) => e.kind === '特効');
             const pct =
-              total > 0 ? ((br.expectedDamage / total) * 100).toFixed(1) : '0.0';
+              total > 0
+                ? ((br.expectedDamage / total) * 100).toFixed(1)
+                : '0.0';
             return (
               <tr
                 key={br.bulletId}
@@ -288,7 +292,10 @@ function SimulationTable({
                 >
                   {hit.bulletId}
                   {bullet?.isPenetration && (
-                    <span className="text-purple-600 dark:text-purple-400 ml-1" title="貫通弾">
+                    <span
+                      className="text-purple-600 dark:text-purple-400 ml-1"
+                      title="貫通弾"
+                    >
                       貫
                     </span>
                   )}
@@ -334,9 +341,7 @@ function SimulationTable({
                     </span>
                     <button
                       onClick={() =>
-                        setOpenDetailIndex(
-                          openDetailIndex === idx ? null : idx,
-                        )
+                        setOpenDetailIndex(openDetailIndex === idx ? null : idx)
                       }
                       className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
                       title="詳細を表示"
@@ -364,42 +369,90 @@ function SimulationTable({
                         {/* 状態フラグ */}
                         <div className="flex flex-wrap gap-1 mb-1">
                           {hit.isFullBreakBefore && (
-                            <span className="px-1 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 text-[9px] rounded font-bold">フルブレイク中</span>
+                            <span className="px-1 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 text-[9px] rounded font-bold">
+                              フルブレイク中
+                            </span>
                           )}
                           {bullet?.isPenetration && (
-                            <span className="px-1 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-[9px] rounded font-bold">貫通弾</span>
+                            <span className="px-1 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-[9px] rounded font-bold">
+                              貫通弾
+                            </span>
                           )}
                         </div>
 
                         {/* 結界異常 */}
                         <div className="space-y-1 bg-gray-50 dark:bg-gray-900/40 p-1.5 rounded">
-                          <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">結界異常枚数</div>
+                          <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">
+                            結界異常枚数
+                          </div>
                           <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px]">
                             <div className="space-y-0.5">
                               <div className="text-gray-500">【敵】</div>
-                              {Object.entries(hit.enemyAilments).map(([a, n]) => (
-                                n > 0 && <div key={a} className="flex justify-between"><span>{a}</span><span className="font-mono text-blue-500">{n}枚</span></div>
-                              ))}
-                              {Object.values(hit.enemyAilments).every(n => n === 0) && <div className="text-gray-400 italic">なし</div>}
+                              {Object.entries(hit.enemyAilments).map(
+                                ([a, n]) =>
+                                  n > 0 && (
+                                    <div
+                                      key={a}
+                                      className="flex justify-between"
+                                    >
+                                      <span>{a}</span>
+                                      <span className="font-mono text-blue-500">
+                                        {n}枚
+                                      </span>
+                                    </div>
+                                  ),
+                              )}
+                              {Object.values(hit.enemyAilments).every(
+                                (n) => n === 0,
+                              ) && (
+                                <div className="text-gray-400 italic">なし</div>
+                              )}
                             </div>
                             <div className="space-y-0.5 border-l border-gray-200 dark:border-gray-700 pl-2">
                               <div className="text-gray-500">【自】</div>
-                              {Object.entries(hit.selfAilments).map(([a, n]) => (
-                                n > 0 && <div key={a} className="flex justify-between"><span>{a}</span><span className="font-mono text-blue-500">{n}枚</span></div>
-                              ))}
-                              {Object.values(hit.selfAilments).every(n => n === 0) && <div className="text-gray-400 italic">なし</div>}
+                              {Object.entries(hit.selfAilments).map(
+                                ([a, n]) =>
+                                  n > 0 && (
+                                    <div
+                                      key={a}
+                                      className="flex justify-between"
+                                    >
+                                      <span>{a}</span>
+                                      <span className="font-mono text-blue-500">
+                                        {n}枚
+                                      </span>
+                                    </div>
+                                  ),
+                              )}
+                              {Object.values(hit.selfAilments).every(
+                                (n) => n === 0,
+                              ) && (
+                                <div className="text-gray-400 italic">なし</div>
+                              )}
                             </div>
                           </div>
                         </div>
 
                         {/* バフ段階 */}
                         <div className="space-y-1">
-                          <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">バフ段階 (Rank1/2)</div>
+                          <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">
+                            バフ段階 (Rank1/2)
+                          </div>
                           {Object.entries(hit.buffStateBefore)
                             .filter(([key, val]) => {
                               if (val === 0) return false;
-                              if (hit.isFullBreakBefore || bullet?.isPenetration) {
-                                if (['enemyYangDefR1', 'enemyYangDefR2', 'enemyYinDefR1', 'enemyYinDefR2'].includes(key)) {
+                              if (
+                                hit.isFullBreakBefore ||
+                                bullet?.isPenetration
+                              ) {
+                                if (
+                                  [
+                                    'enemyYangDefR1',
+                                    'enemyYangDefR2',
+                                    'enemyYinDefR1',
+                                    'enemyYinDefR2',
+                                  ].includes(key)
+                                ) {
                                   return false;
                                 }
                               }

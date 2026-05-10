@@ -136,4 +136,3 @@ export default function EnemyBuffsPanel({ buffs, onChange }: Props) {
     </div>
   );
 }
-

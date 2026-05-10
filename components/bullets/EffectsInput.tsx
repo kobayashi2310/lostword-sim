@@ -8,10 +8,7 @@ import type {
   BreakEffectType,
   AilmentTarget,
 } from '@/types';
-import { 
-  ENEMY_DEBUFF_EFFECT_TYPES, 
-  SELF_BUFF_EFFECT_TYPES 
-} from '@/types';
+import { ENEMY_DEBUFF_EFFECT_TYPES, SELF_BUFF_EFFECT_TYPES } from '@/types';
 
 interface Props {
   effects: BulletEffect[];

@@ -31,7 +31,10 @@
 | `EnemyStatsInput.tsx` | 敵の基本ステータス（陽防、陰防）の入力。 | `stats: EnemyStats`, `onChange` | **低**: `EnemyStats` 型に依存。 |
 | `EnemyWeaknessInput.tsx` | 敵の各属性に対する耐性（有利・等倍・不利）をボタン選択で設定。 | `weakness: EnemyWeaknessConfig`, `onChange` | **低**: 属性相性システムに特化。 |
 | `DamageBonusInput.tsx` | 有利/不利補正、属性ダメージUP、弾種ダメージUPの設定。 | `bullets`, `damageBonus`, `onChange` | **低**: 補正値計算システムに依存。 |
-| `SpecialBuffInput.tsx` | 「蓄力（霊力、結界、体力）」などの特殊なバフ項目を管理する。 | `damageBonus`, `onChange` | **低**: 蓄力システムに特化。 |
+| `SpecialBuffInput.tsx` | 蓄力、共鳴、蓄積といった特殊なバフ項目を統合して管理する親コンポーネント。 | `damageBonus`, `onChange` | **低**: 特殊バフシステム全体に依存。 |
+| `ChargeBuffSection.tsx` | 蓄力（霊力、結界、体力）の個別設定を行う。 | `effects`, `onChange` | **中**: 蓄力ロジックを独立。 |
+| `ResonanceBuffSection.tsx` | 共鳴（ダメージアップ、CRIダメUP等）の設定を行う。 | `effects`, `onChange` | **中**: 共鳴ロジックを独立。 |
+| `AccumulationBuffSection.tsx` | 蓄積バフ（ステータス加算）の設定を行う。同一ペアの重複防止ロジックを含む。 | `effects`, `onChange` | **中**: 蓄積ロジックを独立。 |
 
 ## 5. Results (計算結果・グラフ)
 

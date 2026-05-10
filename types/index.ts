@@ -59,7 +59,9 @@ export type SelfBarriers = [
 export function createEmptyBarriers<T extends number>(
   count: T,
 ): T extends 7 ? EnemyBarriers : SelfBarriers {
-  return Array.from({ length: count }, () => ({ ailment: null })) as any;
+  return Array.from({ length: count }, () => ({ ailment: null })) as T extends 7
+    ? EnemyBarriers
+    : SelfBarriers;
 }
 
 // ============================================================
@@ -225,7 +227,7 @@ export interface BuffStages {
   yangAttackR2: number; // 0〜10
   yinAttackR1: number;
   yinAttackR2: number;
-  speedR1: number;      // -10〜10
+  speedR1: number; // -10〜10
   speedR2: number;
   selfYangDefR1: number;
   selfYangDefR2: number;
@@ -253,11 +255,11 @@ export interface BuffStages {
   enemyEvasionR1: number; // -10〜10
   enemyEvasionR2: number; // -10〜0 (デバフのみ)
   // 敵CRI防御バフ/デバフ
-  enemyCriDefR1: number;      // -10〜10
-  enemyCriDefR2: number;      // -10〜0 (デバフのみ)
+  enemyCriDefR1: number; // -10〜10
+  enemyCriDefR2: number; // -10〜0 (デバフのみ)
   // 敵CRI回避バフ/デバフ
-  enemyCriEvasionR1: number;  // -10〜10
-  enemyCriEvasionR2: number;  // -10〜0 (デバフのみ)
+  enemyCriEvasionR1: number; // -10〜10
+  enemyCriEvasionR2: number; // -10〜0 (デバフのみ)
 }
 
 // combined 命中 R1 = clamp(自身R1 − 敵回避R1, -10, 10)
@@ -392,8 +394,8 @@ export type AccumulationTarget =
 export interface AccumulationEffect {
   sourceStat: AccumulationTarget; // 元になるステータス
   targetStat: AccumulationTarget; // 上乗せ先のステータス
-  sourceValue: number;           // 元のステータスの数値
-  rate: number;                  // 倍率 (%)
+  sourceValue: number; // 元のステータスの数値
+  rate: number; // 倍率 (%)
 }
 
 export function calcAccumulationValue(eff: AccumulationEffect): number {

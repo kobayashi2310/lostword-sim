@@ -10,8 +10,10 @@ interface Props {
 }
 
 export default function EnemyStatsInput({ stats, onChange }: Props) {
-  const set = (field: keyof EnemyStats) => (v: any) =>
-    onChange({ ...stats, [field]: v });
+  const set =
+    <K extends keyof EnemyStats>(field: K) =>
+    (v: EnemyStats[K]) =>
+      onChange({ ...stats, [field]: v });
 
   return (
     <div className="space-y-4">
@@ -61,7 +63,9 @@ export default function EnemyStatsInput({ stats, onChange }: Props) {
                   min={1}
                   max={7}
                   value={stats.initialBarriers}
-                  onChange={(e) => set('initialBarriers')(Number(e.target.value))}
+                  onChange={(e) =>
+                    set('initialBarriers')(Number(e.target.value))
+                  }
                   className="w-20 px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white text-sm focus:outline-none focus:border-blue-500 dark:focus:border-blue-400"
                 />
               </div>

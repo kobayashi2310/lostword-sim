@@ -28,7 +28,11 @@ const selectCls =
 const numInputCls =
   'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white text-xs px-1.5 py-0.5 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400';
 
-export default function BulletForm({ bullet, onChange, isActive = true }: Props) {
+export default function BulletForm({
+  bullet,
+  onChange,
+  isActive = true,
+}: Props) {
   const [expanded, setExpanded] = useState(false);
 
   const set =

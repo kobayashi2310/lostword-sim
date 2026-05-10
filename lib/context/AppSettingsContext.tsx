@@ -1,6 +1,12 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 type LayoutMode = 'tab' | 'split';
 type TabView = 'config' | 'result';
@@ -14,9 +20,15 @@ interface AppSettingsContextType {
   toggleLayoutMode: () => void;
 }
 
-const AppSettingsContext = createContext<AppSettingsContextType | undefined>(undefined);
+const AppSettingsContext = createContext<AppSettingsContextType | undefined>(
+  undefined,
+);
 
-export function AppSettingsProvider({ children }: { children: React.ReactNode }) {
+export function AppSettingsProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [isDark, setIsDark] = useState(true);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('tab');
   const [tabView, setTabView] = useState<TabView>('config');
@@ -64,7 +76,9 @@ export function AppSettingsProvider({ children }: { children: React.ReactNode })
 export function useAppSettings() {
   const context = useContext(AppSettingsContext);
   if (context === undefined) {
-    throw new Error('useAppSettings must be used within an AppSettingsProvider');
+    throw new Error(
+      'useAppSettings must be used within an AppSettingsProvider',
+    );
   }
   return context;
 }

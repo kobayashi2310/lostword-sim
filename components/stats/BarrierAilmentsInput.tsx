@@ -4,27 +4,27 @@ import type { BarrierAilmentType, BarrierStatus } from '@/types';
 
 const AILMENTS: BarrierAilmentType[] = ['燃焼', '凍結', '帯電', '毒霧', '暗闇'];
 
-interface Props {
-  barriers: BarrierStatus[];
+interface Props<T extends BarrierStatus[]> {
+  barriers: T;
   maxBarriers: number;
-  onChange: (barriers: BarrierStatus[]) => void;
+  onChange: (barriers: T) => void;
   nullifyAilments?: BarrierAilmentType[];
 }
 
-export default function BarrierAilmentsInput({
+export default function BarrierAilmentsInput<T extends BarrierStatus[]>({
   barriers,
   maxBarriers,
   onChange,
   nullifyAilments = [],
-}: Props) {
+}: Props<T>) {
   const setAilment = (layerIdx: number, ailment: BarrierAilmentType | null) => {
-    const next = [...barriers];
+    const next = [...barriers] as T;
     next[layerIdx] = { ...next[layerIdx], ailment };
     onChange(next);
   };
 
   const resetAll = () => {
-    const next = barriers.map((b) => ({ ...b, ailment: null }));
+    const next = barriers.map((b) => ({ ...b, ailment: null })) as T;
     onChange(next);
   };
 

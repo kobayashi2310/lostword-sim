@@ -8,10 +8,7 @@ import type {
   SimulationConfig,
   SimulationResult,
   SingleHitResult,
-  BarrierAilmentType,
   ElementalAdvantage,
-  EffectBreak,
-  BreakEffectType,
   BarrierStatus,
 } from '@/types';
 import { getAdvantageForBullet } from '@/types';

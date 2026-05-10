@@ -1,12 +1,5 @@
-'use client';
-
-import type {
-  BuffStages,
-  DamageBonus,
-  BarrierAilmentType,
-  AbilityConfig,
-} from '@/types';
-import { getAbilityBuffBonus, getAtkDefSpdMultiplier, clampR1 } from './buffs';
+import type { DamageBonus, BarrierAilmentType, AbilityConfig } from '@/types';
+import { getAtkDefSpdMultiplier, clampR1 } from './buffs';
 
 /**
  * ステータスに対する一連の補正（蓄積・能力・Rank1/2バフ・異常デバフ）を適用した最終的な倍率を計算する

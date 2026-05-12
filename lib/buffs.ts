@@ -207,13 +207,10 @@ export function applyEnemyDebuff(
       next.enemyEvasionR1 = clampR1(next.enemyEvasionR1 - stages);
       break;
     case '対象陽攻低下':
-      next.yangAttackR1 = clampR1(next.yangAttackR1 - stages);
-      break;
     case '対象陰攻低下':
-      next.yinAttackR1 = clampR1(next.yinAttackR1 - stages);
-      break;
     case '対象速力低下':
-      next.speedR1 = clampR1(next.speedR1 - stages);
+      // 敵の攻撃・速力デバフ。敵の攻撃力はこちらの与ダメ計算に影響しないため何もしない。
+      // 弾性弾（相手の攻撃バフが高いほど CRI 命中率上昇）の効果確定後に実装予定。
       break;
     default:
       break;

@@ -2,36 +2,26 @@
 
 import { useMemo, useState } from 'react';
 import type { StoryCard } from '@/types';
-import { DEFAULT_STORY_CARDS } from '@/lib/data/storyCards';
 
-export function useStoryCards() {
+export function useStoryCards(cards: StoryCard[]) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTags, setFilterTags] = useState<string[]>([]);
 
   const filteredCards = useMemo(() => {
-    return DEFAULT_STORY_CARDS.filter((card) => {
-      // 名前検索
-      const matchName = card.name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-
-      // 効果タグ検索
+    return cards.filter((card) => {
+      const matchName = card.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchTags =
         filterTags.length === 0 ||
         filterTags.every((tag) =>
-          card.effects.some((eff) => {
-            const effectStr = `${eff.kind}${eff.target}`;
-            return effectStr.includes(tag);
-          }),
+          card.effects.some((eff) => `${eff.kind}${eff.target}`.includes(tag)),
         );
-
       return matchName && matchTags;
     });
-  }, [searchQuery, filterTags]);
+  }, [cards, searchQuery, filterTags]);
 
   const allTags = useMemo(() => {
     const tags = new Set<string>();
-    DEFAULT_STORY_CARDS.forEach((card) => {
+    cards.forEach((card) => {
       card.effects.forEach((eff) => {
         if (eff.kind === '自身バフ' || eff.kind === '対象デバフ') {
           tags.add(`${eff.target}UP`);
@@ -43,7 +33,7 @@ export function useStoryCards() {
       });
     });
     return Array.from(tags).sort();
-  }, []);
+  }, [cards]);
 
   const toggleTag = (tag: string) => {
     setFilterTags((prev) =>
@@ -51,12 +41,5 @@ export function useStoryCards() {
     );
   };
 
-  return {
-    searchQuery,
-    setSearchQuery,
-    filterTags,
-    toggleTag,
-    filteredCards,
-    allTags,
-  };
+  return { searchQuery, setSearchQuery, filterTags, toggleTag, filteredCards, allTags };
 }

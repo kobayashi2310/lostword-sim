@@ -15,6 +15,7 @@ import EnemyBuffsPanel from '@/components/buffs/EnemyBuffsPanel';
 import BulletListForm from '@/components/bullets/BulletListForm';
 import HitOrderInput from '@/components/hitorder/HitOrderInput';
 import SimulationResults from '@/components/results/SimulationResults';
+import StoryCardSelector from '@/components/storycards/StoryCardSelector';
 
 // Layout Components
 import Header from '@/components/layout/Header';
@@ -51,6 +52,8 @@ export default function Home() {
     setSpecialAttackActive,
     damageBonus,
     setDamageBonus,
+    equippedStoryCards,
+    setEquippedStoryCards,
     result,
     validationErrors,
   } = useSimulation();
@@ -74,8 +77,23 @@ export default function Home() {
           <div className="max-w-sm space-y-6">
             <div>
               <h2 className={sectionTitle}>自身ステータス</h2>
-              <SelfStatsInput stats={selfStats} onChange={setSelfStats} />
+              <SelfStatsInput
+                stats={selfStats}
+                onChange={setSelfStats}
+                equippedStoryCards={equippedStoryCards}
+              />
             </div>
+          </div>
+        );
+      case 'storycard':
+        return (
+          <div className="max-w-md">
+            <h2 className={sectionTitle}>絵札装備 (5スロット)</h2>
+            <StoryCardSelector
+              equippedCards={equippedStoryCards}
+              onCardsChange={setEquippedStoryCards}
+              characterClass={selfStats.characterClass}
+            />
           </div>
         );
       case 'enemy':
@@ -96,7 +114,12 @@ export default function Home() {
         return (
           <div className="max-w-sm">
             <h2 className={sectionTitle}>自身バフ/デバフ段階</h2>
-            <AllBuffsPanel buffs={buffs} onChange={setBuffs} />
+            <AllBuffsPanel
+              buffs={buffs}
+              onChange={setBuffs}
+              mainStoryCard={equippedStoryCards[0]}
+              characterClass={selfStats.characterClass}
+            />
           </div>
         );
       case 'bullets':
@@ -130,6 +153,8 @@ export default function Home() {
               bullets={bullets}
               damageBonus={damageBonus}
               onChange={setDamageBonus}
+              mainStoryCard={equippedStoryCards[0]}
+              characterClass={selfStats.characterClass}
             />
           </div>
         );

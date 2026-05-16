@@ -1,16 +1,35 @@
 'use client';
 
-import type { BuffStages } from '@/types';
+import type { BuffStages, StoryCard, CharacterClass } from '@/types';
 import BuffRankInput from './BuffRankInput';
 
 interface Props {
   buffs: BuffStages;
   onChange: (buffs: BuffStages) => void;
+  mainStoryCard: StoryCard | null;
+  characterClass: CharacterClass;
 }
 
-export default function AllBuffsPanel({ buffs, onChange }: Props) {
+export default function AllBuffsPanel({
+  buffs,
+  onChange,
+  mainStoryCard,
+  characterClass,
+}: Props) {
   const set = (field: keyof BuffStages) => (v: number) =>
     onChange({ ...buffs, [field]: v });
+
+  const getBonus = (target: string): number => {
+    if (!mainStoryCard) return 0;
+    return mainStoryCard.effects
+      .filter(
+        (e) =>
+          e.kind === '自身バフ' &&
+          e.target === target &&
+          (!e.condition || e.condition === characterClass),
+      )
+      .reduce((sum, e) => sum + e.value, 0);
+  };
 
   return (
     <div className="space-y-5">
@@ -24,6 +43,7 @@ export default function AllBuffsPanel({ buffs, onChange }: Props) {
             label="陽攻"
             r1={buffs.yangAttackR1}
             r2={buffs.yangAttackR2}
+            bonusR1={getBonus('陽攻')}
             onChangeR1={set('yangAttackR1')}
             onChangeR2={set('yangAttackR2')}
           />
@@ -31,6 +51,7 @@ export default function AllBuffsPanel({ buffs, onChange }: Props) {
             label="陰攻"
             r1={buffs.yinAttackR1}
             r2={buffs.yinAttackR2}
+            bonusR1={getBonus('陰攻')}
             onChangeR1={set('yinAttackR1')}
             onChangeR2={set('yinAttackR2')}
           />
@@ -47,6 +68,7 @@ export default function AllBuffsPanel({ buffs, onChange }: Props) {
             label="速力"
             r1={buffs.speedR1}
             r2={buffs.speedR2}
+            bonusR1={getBonus('速力')}
             onChangeR1={set('speedR1')}
             onChangeR2={set('speedR2')}
           />
@@ -63,6 +85,7 @@ export default function AllBuffsPanel({ buffs, onChange }: Props) {
             label="自身 陽防"
             r1={buffs.selfYangDefR1}
             r2={buffs.selfYangDefR2}
+            bonusR1={getBonus('陽防')}
             onChangeR1={set('selfYangDefR1')}
             onChangeR2={set('selfYangDefR2')}
           />
@@ -70,6 +93,7 @@ export default function AllBuffsPanel({ buffs, onChange }: Props) {
             label="自身 陰防"
             r1={buffs.selfYinDefR1}
             r2={buffs.selfYinDefR2}
+            bonusR1={getBonus('陰防')}
             onChangeR1={set('selfYinDefR1')}
             onChangeR2={set('selfYinDefR2')}
           />
@@ -86,6 +110,7 @@ export default function AllBuffsPanel({ buffs, onChange }: Props) {
             label="命中"
             r1={buffs.selfHitR1}
             r2={buffs.selfHitR2}
+            bonusR1={getBonus('命中')}
             onChangeR1={set('selfHitR1')}
             onChangeR2={set('selfHitR2')}
           />
@@ -102,6 +127,7 @@ export default function AllBuffsPanel({ buffs, onChange }: Props) {
             label="CRI攻撃"
             r1={buffs.selfCriAttackR1}
             r2={buffs.selfCriAttackR2}
+            bonusR1={getBonus('CRI攻撃')}
             onChangeR1={set('selfCriAttackR1')}
             onChangeR2={set('selfCriAttackR2')}
           />
@@ -118,6 +144,7 @@ export default function AllBuffsPanel({ buffs, onChange }: Props) {
             label="CRI命中"
             r1={buffs.selfCriHitR1}
             r2={buffs.selfCriHitR2}
+            bonusR1={getBonus('CRI命中')}
             onChangeR1={set('selfCriHitR1')}
             onChangeR2={set('selfCriHitR2')}
           />

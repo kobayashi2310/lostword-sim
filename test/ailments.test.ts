@@ -46,6 +46,7 @@ describe('結界異常ロジックの検証', () => {
       yinDefense: 1000,
       barriers: Array(5).fill({ ailment: null }) as any,
       ability: { convertAilments: [], nullifyAilments: [] },
+      characterClass: 'なし',
     };
     const defaultBullet: Bullet = {
       id: 1, element: '星', yinYang: '陽気', bulletKind: '通常弾',
@@ -130,6 +131,7 @@ describe('結界異常ロジックの検証', () => {
       yangAttack: 1000, yinAttack: 1000, speed: 1000, yangDefense: 1000, yinDefense: 1000,
       barriers: Array(5).fill({ ailment: null }) as any,
       ability: createDefaultAbilityConfig(),
+      characterClass: 'なし',
     };
     const defaultEnemy: EnemyStats = {
       yangDefense: 1000, yinDefense: 1000, hasBarriers: true, initialBarriers: 3, isFullBreak: false,
@@ -164,6 +166,7 @@ describe('結界異常ロジックの検証', () => {
         enemyWeakness: weakness,
         specialAttackActive: {},
         damageBonus,
+        activeBulletCount: 6,
       };
 
       const result = runSimulation(config);
@@ -205,6 +208,7 @@ describe('結界異常ロジックの検証', () => {
         enemyWeakness: weakness,
         specialAttackActive: {},
         damageBonus,
+        activeBulletCount: 6,
       };
 
       const result = runSimulation(config);

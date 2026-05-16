@@ -11,6 +11,7 @@
 | `BulletKind` | `'光弾' \| 'レーザー弾' \| ... \| 'ミサイル弾'` | バレットの種類（9種類）。弾種補正の対象。 |
 | `ElementalAdvantage`| `'有利' \| '等倍' \| '不利'` | 属性相性の結果。 |
 | `BarrierAilmentType` | `'燃焼' \| '凍結' \| '帯電' \| '毒霧' \| '暗闇'` | 結界異常の種類。 |
+| `CharacterClass` | `'攻撃式' \| '防御式' \| '速攻式' \| '支援式' \| '妨害式' \| '回復式' \| '破壊式' \| '技巧式'` | キャラクターの式（ジョブ）。 |
 | `BreakEffectType` | `'過毒' \| '焼却' \| '氷解' \| '放電' \| '閃光'` | 結界異常を破壊する追加効果。 |
 
 ## 2. 結界と能力 (Barriers & Ability)
@@ -58,7 +59,7 @@
 ## 4. ステータス・バフ関連
 
 ### `SelfStats` / `EnemyStats`
-- **SelfStats**: 陽攻, 陰攻, 速力, 陽防, 陰防, `barriers` (5枚), `ability`
+- **SelfStats**: 陽攻, 陰攻, 速力, 陽防, 陰防, `barriers` (5枚), `ability`, `characterClass` (式)
 - **EnemyStats**: 陽防, 陰防, `hasBarriers` (フラグ), `initialBarriers` (1-7枚), `isFullBreak` (初期状態フラグ), `barriers` (7枚), `ability`
 
 ### `BuffStages`
@@ -90,7 +91,23 @@
 - `kind`: `'ダメージアップ' | 'CRI時ダメージアップ' | '攻撃時CRI率' | '速力'`
 - `value`: 補正値 (%)
 
-## 6. ブースト関連 (Boost)
+## 6. 絵札 (Story Card)
+
+### `StoryCard`
+絵札のステータス補正と効果を保持する構造です。
+- `id`: 一意識別子。
+- `name`: 絵札名。
+- `stats`: 恒常的なステータス加算値（陽攻、陰攻、速力、陽防、陰防）。
+- `effects`: `StoryCardEffect` の配列（最大3つ）。
+
+### `StoryCardEffect`
+絵札が持つ個別の効果です。
+- `kind`: `'自身バフ' | '対象デバフ' | '属性ダメージUP' | '弾種ダメージUP' | '霊力上昇' | ...`
+- `target`: 効果対象（'陽攻', '星', 'レーザー弾' 等）。
+- `value`: 効果量（段階 または %）。
+- `condition`: 発動条件となる `CharacterClass`（任意）。
+
+## 7. ブースト関連 (Boost)
 
 ### `BoostLevel`
 - `0 | 1 | 2 | 3` (ブースト段階)

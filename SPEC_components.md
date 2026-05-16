@@ -32,7 +32,14 @@
 | `EnemyWeaknessInput.tsx` | 敵の各属性に対する耐性（有利・等倍・不利）をボタン選択で設定。 | `weakness: EnemyWeaknessConfig`, `onChange` | **低**: 属性相性システムに特化。 |
 | `DamageBonusInput.tsx` | 有利/不利補正、属性ダメージUP、弾種ダメージUPの設定。 | `bullets`, `damageBonus`, `onChange` | **低**: 補正値計算システムに依存。 |
 | `SpecialBuffInput.tsx` | 蓄力、共鳴、蓄積といった特殊なバフ項目を統合して管理する親コンポーネント。 | `damageBonus`, `onChange` | **低**: 特殊バフシステム全体に依存。 |
+| `StoryCardSelector.tsx` | 絵札の検索、フィルタリング、選択を行う。 | `selectedCard`, `onSelect` | **中**: 絵札データ構造に依存。 |
 | `ChargeBuffSection.tsx` | 蓄力（霊力、結界、体力）の個別設定を行う。 | `effects`, `onChange` | **中**: 蓄力ロジックを独立。 |
+// ... (中略)
+### 3. ステータス・バフの表示拡張
+以下のコンポーネントでは、装備中の絵札による加算分が `+ XX (絵札)` のように明示されます。
+- `SelfStatsInput.tsx`: 各ステータス項目の横。
+- `AllBuffsPanel.tsx`: 各バフ段階 (R1) の横。
+- `DamageBonusInput.tsx`: 属性・弾種ダメージUPの横。
 | `ResonanceBuffSection.tsx` | 共鳴（ダメージアップ、CRIダメUP等）の設定を行う。 | `effects`, `onChange` | **中**: 共鳴ロジックを独立。 |
 | `AccumulationBuffSection.tsx` | 蓄積バフ（ステータス加算）の設定を行う。同一ペアの重複防止ロジックを含む。 | `effects`, `onChange` | **中**: 蓄積ロジックを独立。 |
 

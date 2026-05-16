@@ -9,6 +9,9 @@ import type {
   EnemyWeaknessConfig,
   SelfStats,
   SimulationResult,
+  StoryCard,
+  Element,
+  BulletKind,
 } from '@/types';
 import { createDefaultDamageBonus, createDefaultWeakness } from '@/types';
 import { buffValidationMessages } from '@/lib/buffs';
@@ -49,6 +52,11 @@ export function useSimulation() {
     DEFAULT_HIT_ORDER_TEXT,
   );
   const [isGirlReincarnation, setIsGirlReincarnation] = useState(false);
+
+  // 絵札 (5スロット)
+  const [equippedStoryCards, setEquippedStoryCards] = useState<
+    (StoryCard | null)[]
+  >([null, null, null, null, null]);
 
   // ブースト関連の状態
   const [boostLevel, setBoostLevel] = useState<BoostLevel>(3);
@@ -110,17 +118,91 @@ export function useSimulation() {
         return;
       }
 
+      // 絵札の効果をシミュレーション用に統合
+      let finalInitialBuffs = { ...buffs };
+      let finalDamageBonus = { ...damageBonus };
+
+      // 効果は1枚目 (スロット0) のみ適用
+      const mainCard = equippedStoryCards[0];
+      if (mainCard) {
+        for (const effect of mainCard.effects) {
+          // 式の条件チェック (特定の式でないならスキップ。なし(空)なら無条件)
+          if (
+            effect.condition &&
+            effect.condition !== selfStats.characterClass
+          ) {
+            continue;
+          }
+
+          if (effect.kind === '自身バフ') {
+            const fieldMap: Record<string, keyof BuffStages> = {
+              陽攻: 'yangAttackR1',
+              陰攻: 'yinAttackR1',
+              速力: 'speedR1',
+              陽防: 'selfYangDefR1',
+              陰防: 'selfYinDefR1',
+              命中: 'selfHitR1',
+              CRI攻撃: 'selfCriAttackR1',
+              CRI命中: 'selfCriHitR1',
+            };
+            const field = fieldMap[effect.target];
+            if (field) {
+              finalInitialBuffs[field] = Math.max(
+                -10,
+                Math.min(10, finalInitialBuffs[field] + effect.value),
+              );
+            }
+          } else if (effect.kind === '属性ダメージUP') {
+            const el = effect.target as unknown as Element;
+            const elementBonus = { ...finalDamageBonus.elementBonus };
+            const currentBonus = elementBonus[el] ?? 0;
+            elementBonus[el] = currentBonus + effect.value;
+            finalDamageBonus.elementBonus = elementBonus;
+          } else if (effect.kind === '弾種ダメージUP') {
+            const bk = effect.target as unknown as BulletKind;
+            const bulletKindBonus = { ...finalDamageBonus.bulletKindBonus };
+            const currentBonus = bulletKindBonus[bk] ?? 0;
+            bulletKindBonus[bk] = currentBonus + effect.value;
+            finalDamageBonus.bulletKindBonus = bulletKindBonus;
+          }
+        }
+      }
+
+      // 絵札のステータス補正を統合 (5枚分すべて合算)
+      const cardStats = equippedStoryCards.reduce(
+        (acc, card) => {
+          if (!card) return acc;
+          return {
+            yangAttack: acc.yangAttack + (card.stats.yangAttack ?? 0),
+            yinAttack: acc.yinAttack + (card.stats.yinAttack ?? 0),
+            speed: acc.speed + (card.stats.speed ?? 0),
+            yangDefense: acc.yangDefense + (card.stats.yangDefense ?? 0),
+            yinDefense: acc.yinDefense + (card.stats.yinDefense ?? 0),
+          };
+        },
+        { yangAttack: 0, yinAttack: 0, speed: 0, yangDefense: 0, yinDefense: 0 },
+      );
+
+      const finalSelfStats: SelfStats = {
+        ...selfStats,
+        yangAttack: selfStats.yangAttack + cardStats.yangAttack,
+        yinAttack: selfStats.yinAttack + cardStats.yinAttack,
+        speed: selfStats.speed + cardStats.speed,
+        yangDefense: selfStats.yangDefense + cardStats.yangDefense,
+        yinDefense: selfStats.yinDefense + cardStats.yinDefense,
+      };
+
       setResult(
         runSimulation({
-          selfStats,
+          selfStats: finalSelfStats,
           enemyStats,
-          initialBuffs: buffs,
+          initialBuffs: finalInitialBuffs,
           bullets,
           hitOrder,
           isGirlReincarnation,
           enemyWeakness,
           specialAttackActive,
-          damageBonus,
+          damageBonus: finalDamageBonus,
           activeBulletCount,
         }),
       );
@@ -141,6 +223,7 @@ export function useSimulation() {
     enemyWeakness,
     specialAttackActive,
     damageBonus,
+    equippedStoryCards,
   ]);
 
   return {
@@ -157,6 +240,7 @@ export function useSimulation() {
     enemyWeakness,
     specialAttackActive,
     damageBonus,
+    equippedStoryCards,
     result,
     validationErrors,
     // Setters
@@ -171,5 +255,6 @@ export function useSimulation() {
     setEnemyWeakness,
     setSpecialAttackActive,
     setDamageBonus,
+    setEquippedStoryCards,
   };
 }

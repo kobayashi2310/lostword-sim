@@ -28,6 +28,16 @@ export type BulletKind =
 
 export type ElementalAdvantage = '有利' | '等倍' | '不利';
 
+export type CharacterClass =
+  | '攻撃式'
+  | '防御式'
+  | '速攻式'
+  | '支援式'
+  | '妨害式'
+  | '回復式'
+  | '破壊式'
+  | '技巧式';
+
 // ============================================================
 // 結界異常
 // ============================================================
@@ -168,6 +178,39 @@ export interface Bullet {
 }
 
 // ============================================================
+// 絵札 (Story Card)
+// ============================================================
+
+export type StoryCardEffectKind =
+  | '自身バフ'
+  | '対象デバフ'
+  | '属性ダメージUP'
+  | '弾種ダメージUP'
+  | '霊力上昇'
+  | '結界増加'
+  | 'ダメージ軽減';
+
+export interface StoryCardEffect {
+  kind: StoryCardEffectKind;
+  target: string; // 例: '陽攻', '星', '光弾'
+  value: number; // 段階 or %
+  condition?: CharacterClass; // 特定の式の場合のみ発動。なしなら無条件。
+}
+
+export interface StoryCard {
+  id: string;
+  name: string;
+  stats: {
+    yangAttack?: number;
+    yinAttack?: number;
+    speed?: number;
+    yangDefense?: number;
+    yinDefense?: number;
+  };
+  effects: StoryCardEffect[];
+}
+
+// ============================================================
 // 味方の能力 (Ability)
 // ============================================================
 
@@ -205,6 +248,7 @@ export interface SelfStats {
   yinDefense: number; // 陰防
   barriers: SelfBarriers;
   ability: AbilityConfig;
+  characterClass: CharacterClass;
 }
 
 export interface EnemyStats {
@@ -421,9 +465,9 @@ export type GreatBarrierDir = 'UP' | 'DOWN';
 export interface GreatBarrierEntry {
   id: number;
   stat: GreatBarrierStatType;
-  selfValue: number;          // % (>= 0)
-  selfDir: GreatBarrierDir;   // 味方側の方向; 相手側は常に逆
-  enemyValue: number;         // % (>= 0)
+  selfValue: number; // % (>= 0)
+  selfDir: GreatBarrierDir; // 味方側の方向; 相手側は常に逆
+  enemyValue: number; // % (>= 0)
 }
 
 export interface GreatBarrierConfig {

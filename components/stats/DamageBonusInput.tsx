@@ -1,11 +1,20 @@
 'use client';
 
-import type { Bullet, BulletKind, DamageBonus, Element } from '@/types';
+import type {
+  Bullet,
+  BulletKind,
+  DamageBonus,
+  Element,
+  StoryCard,
+  CharacterClass,
+} from '@/types';
 
 interface Props {
   bullets: Bullet[];
   damageBonus: DamageBonus;
   onChange: (bonus: DamageBonus) => void;
+  mainStoryCard: StoryCard | null;
+  characterClass: CharacterClass;
 }
 
 const inputCls =
@@ -27,12 +36,27 @@ export default function DamageBonusInput({
   bullets,
   damageBonus,
   onChange,
+  mainStoryCard,
+  characterClass,
 }: Props) {
-  // 現在のバレット一覧から使われている属性・弾種のみ抽出（重複排除・順序維持）
-  const usedElements = [...new Set(bullets.map((b) => b.element))] as Element[];
-  const usedKinds = [
-    ...new Set(bullets.map((b) => b.bulletKind)),
-  ] as BulletKind[];
+    // 現在のバレット一覧から使われている属性・弾種のみ抽出（重複排除・順序維持）
+    const usedElements = [...new Set(bullets.map((b) => b.element))] as Element[];
+    const usedKinds = [
+      ...new Set(bullets.map((b) => b.bulletKind)),
+    ] as BulletKind[];
+
+    const getCardBonus = (kind: string, target: string): number => {
+      if (!mainStoryCard) return 0;
+      return mainStoryCard.effects
+        .filter(
+          (e) =>
+            e.kind === kind &&
+            e.target === target &&
+            (!e.condition || e.condition === characterClass),
+        )
+        .reduce((sum, e) => sum + e.value, 0);
+    };
+
 
   const setElement = (el: Element, pct: number) =>
     onChange({
@@ -114,29 +138,42 @@ export default function DamageBonusInput({
             属性ダメージアップ
           </h4>
           <div className="space-y-2">
-            {usedElements.map((el) => (
-              <div key={el} className="flex items-center gap-2">
-                <span
-                  className={`w-6 text-sm font-semibold text-center shrink-0 ${ELEMENT_COLORS[el] ?? ''}`}
-                >
-                  {el}
-                </span>
-                <input
-                  type="number"
-                  min={0}
-                  max={500}
-                  value={damageBonus.elementBonus[el] ?? 0}
-                  onChange={(e) => {
-                    const v = Number(e.target.value);
-                    setElement(el, Number.isFinite(v) ? v : 0);
-                  }}
-                  className={inputCls}
-                />
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  %
-                </span>
-              </div>
-            ))}
+            {usedElements.map((el) => {
+              const bonus = getCardBonus('属性ダメージUP', el);
+              return (
+                <div key={el} className="flex items-center gap-2">
+                  <span
+                    className={`w-6 text-sm font-semibold text-center shrink-0 ${ELEMENT_COLORS[el] ?? ''}`}
+                  >
+                    {el}
+                  </span>
+                  <div className="relative flex items-center">
+                    <input
+                      type="number"
+                      min={0}
+                      max={500}
+                      value={damageBonus.elementBonus[el] ?? 0}
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        setElement(el, Number.isFinite(v) ? v : 0);
+                      }}
+                      className={inputCls}
+                    />
+                    {bonus > 0 && (
+                      <span className="ml-2 text-xs text-amber-600 dark:text-amber-400 font-bold whitespace-nowrap">
+                        +{bonus}%{' '}
+                        <span className="text-[9px] font-normal opacity-80">
+                          (絵札)
+                        </span>
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    %
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -148,27 +185,40 @@ export default function DamageBonusInput({
             弾種ダメージアップ
           </h4>
           <div className="space-y-2">
-            {usedKinds.map((kind) => (
-              <div key={kind} className="flex items-center gap-2">
-                <span className="text-xs text-gray-600 dark:text-gray-300 w-24 shrink-0">
-                  {kind}
-                </span>
-                <input
-                  type="number"
-                  min={0}
-                  max={500}
-                  value={damageBonus.bulletKindBonus[kind] ?? 0}
-                  onChange={(e) => {
-                    const v = Number(e.target.value);
-                    setKind(kind, Number.isFinite(v) ? v : 0);
-                  }}
-                  className={inputCls}
-                />
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  %
-                </span>
-              </div>
-            ))}
+            {usedKinds.map((kind) => {
+              const bonus = getCardBonus('弾種ダメージUP', kind);
+              return (
+                <div key={kind} className="flex items-center gap-2">
+                  <span className="text-xs text-gray-600 dark:text-gray-300 w-24 shrink-0">
+                    {kind}
+                  </span>
+                  <div className="relative flex items-center">
+                    <input
+                      type="number"
+                      min={0}
+                      max={500}
+                      value={damageBonus.bulletKindBonus[kind] ?? 0}
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        setKind(kind, Number.isFinite(v) ? v : 0);
+                      }}
+                      className={inputCls}
+                    />
+                    {bonus > 0 && (
+                      <span className="ml-2 text-xs text-amber-600 dark:text-amber-400 font-bold whitespace-nowrap">
+                        +{bonus}%{' '}
+                        <span className="text-[9px] font-normal opacity-80">
+                          (絵札)
+                        </span>
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    %
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

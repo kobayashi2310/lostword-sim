@@ -14,6 +14,7 @@ describe('Resonance Logic Tests', () => {
     yinDefense: 1000,
     barriers: Array(5).fill({ ailment: null }) as any,
     ability: defaultAbility,
+    characterClass: 'なし',
   };
 
   const enemyStats: EnemyStats = {

@@ -5,10 +5,12 @@ export type ConfigSection =
   | 'bullets'
   | 'hitorder'
   | 'bonus'
-  | 'special';
+  | 'special'
+  | 'storycard';
 
 export const CONFIG_SECTIONS: { id: ConfigSection; label: string }[] = [
   { id: 'stats', label: 'ステータス' },
+  { id: 'storycard', label: '絵札' },
   { id: 'enemy', label: '相手' },
   { id: 'buffs', label: '自身バフ' },
   { id: 'bullets', label: 'バレット' },

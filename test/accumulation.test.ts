@@ -13,6 +13,7 @@ describe('蓄積バフの計算検証', () => {
     yinDefense: 1000,
     barriers: Array(5).fill({ ailment: null }) as any,
     ability: createDefaultAbilityConfig(),
+    characterClass: 'なし',
   };
 
   const slashBullet: Bullet = {

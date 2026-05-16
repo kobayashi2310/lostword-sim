@@ -4,6 +4,7 @@ interface Props {
   label: string;
   r1: number;
   r2: number;
+  bonusR1?: number; // 絵札等による加算
   r1Min?: number;
   r1Max?: number;
   r2Min?: number;
@@ -23,6 +24,7 @@ export default function BuffRankInput({
   label,
   r1,
   r2,
+  bonusR1 = 0,
   r1Min = -10,
   r1Max = 10,
   r2Min = 0,
@@ -37,18 +39,25 @@ export default function BuffRankInput({
       </span>
       <div className="flex items-center gap-1">
         <span className="text-xs text-gray-400 dark:text-gray-500">R1</span>
-        <input
-          type="number"
-          min={r1Min}
-          max={r1Max}
-          value={r1}
-          onChange={(e) =>
-            onChangeR1(clamp(Number(e.target.value), r1Min, r1Max))
-          }
-          className={inputCls}
-        />
+        <div className="relative flex items-center">
+          <input
+            type="number"
+            min={r1Min}
+            max={r1Max}
+            value={r1}
+            onChange={(e) =>
+              onChangeR1(clamp(Number(e.target.value), r1Min, r1Max))
+            }
+            className={inputCls}
+          />
+          {bonusR1 !== 0 && (
+            <span className="absolute -right-12 text-[10px] text-blue-600 dark:text-blue-400 font-bold whitespace-nowrap">
+              +{bonusR1}
+            </span>
+          )}
+        </div>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 ml-10">
         <span className="text-xs text-gray-400 dark:text-gray-500">R2</span>
         <input
           type="number"

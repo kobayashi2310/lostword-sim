@@ -18,6 +18,7 @@ export const DEFAULT_SELF_STATS: SelfStats = {
     ],
     nullifyAilments: ['毒霧', '暗闇'],
   },
+  characterClass: '攻撃式',
 };
 
 export const DEFAULT_ENEMY_STATS: EnemyStats = {

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { calcSingleHitDamage, calcAttackPower, calcEnemyDefense } from '@/lib/damage';
 import { createDefaultBuffStages } from '@/lib/buffs';
 import { createDefaultAbilityConfig, createDefaultGreatBarrierConfig } from '@/types';
-import type { Bullet, SelfStats, EnemyStats, DamageBonus, GreatBarrierConfig } from '@/types';
+import type { Bullet, SelfStats, EnemyStats, DamageBonus, GreatBarrierEntry, GreatBarrierStatType, GreatBarrierDir } from '@/types';
 
 describe('GreatBarrier Logic Tests', () => {
   const defaultAbility = createDefaultAbilityConfig();
@@ -54,17 +54,23 @@ describe('GreatBarrier Logic Tests', () => {
     greatBarrier: null,
   };
 
-  function withGB(gb: Partial<GreatBarrierConfig>): DamageBonus {
-    return {
-      ...baseBonus,
-      greatBarrier: { ...createDefaultGreatBarrierConfig(), ...gb },
-    };
+  function entry(
+    stat: GreatBarrierStatType,
+    selfDir: GreatBarrierDir,
+    selfValue: number,
+    enemyValue: number,
+  ): GreatBarrierEntry {
+    return { id: 1, stat, selfDir, selfValue, enemyValue };
+  }
+
+  function withGB(entries: GreatBarrierEntry[]): DamageBonus {
+    return { ...baseBonus, greatBarrier: { entries } };
   }
 
   // ── 威力補正 ─────────────────────────────────────────────
   it('should apply power bonus (60% UP → power * 1.6)', () => {
     const dmgBase = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', false, baseBonus);
-    const dmgGB = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', false, withGB({ powerBonus: 60 }));
+    const dmgGB = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', false, withGB([entry('威力', 'UP', 60, 0)]));
     expect(dmgGB).toBe(Math.floor(dmgBase * 1.6));
   });
 
@@ -74,27 +80,31 @@ describe('GreatBarrier Logic Tests', () => {
     expect(dmgNoGB).toBe(dmgBase);
   });
 
+  it('should apply power DOWN correctly (60% DOWN → power * 0.4)', () => {
+    const dmgBase = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', false, baseBonus);
+    const dmgGB = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', false, withGB([entry('威力', 'DOWN', 60, 0)]));
+    expect(dmgGB).toBe(Math.floor(dmgBase * 0.4));
+  });
+
   // ── 自身陽攻補正 ─────────────────────────────────────────
   it('should apply self yang attack bonus (30% UP → attackPower * 1.3)', () => {
     const yangBullet = { ...baseBullet, yinYang: '陽気' as const };
     const atkBase = calcAttackPower(selfStats, buffs, yangBullet, undefined, baseBonus);
-    const atkGB = calcAttackPower(selfStats, buffs, yangBullet, undefined, withGB({ selfYangAttack: 30 }));
+    const atkGB = calcAttackPower(selfStats, buffs, yangBullet, undefined, withGB([entry('陽攻', 'UP', 30, 0)]));
     expect(atkGB).toBe(Math.floor(atkBase * 1.3));
   });
 
   it('should apply self yin attack bonus (50% UP) only to yin bullets', () => {
     const yinBullet = { ...baseBullet, yinYang: '陰気' as const };
     const yangBullet = { ...baseBullet, yinYang: '陽気' as const };
-    const bonus = withGB({ selfYinAttack: 50 });
+    const bonus = withGB([entry('陰攻', 'UP', 50, 0)]);
 
     const atkYinBase = calcAttackPower(selfStats, buffs, yinBullet, undefined, baseBonus);
     const atkYinGB = calcAttackPower(selfStats, buffs, yinBullet, undefined, bonus);
     const atkYangBase = calcAttackPower(selfStats, buffs, yangBullet, undefined, baseBonus);
     const atkYangGB = calcAttackPower(selfStats, buffs, yangBullet, undefined, bonus);
 
-    // 陰気弾のみ補正
     expect(atkYinGB).toBe(Math.floor(atkYinBase * 1.5));
-    // 陽気弾は影響なし
     expect(atkYangGB).toBe(atkYangBase);
   });
 
@@ -104,78 +114,70 @@ describe('GreatBarrier Logic Tests', () => {
     // 基礎: 陽攻2000 + 速力1000 = 3000
     // 大結界(速力100%UP): 陽攻2000 + 速力2000 = 4000
     const atkBase = calcAttackPower(selfStats, buffs, slashBullet, undefined, baseBonus);
-    const atkGB = calcAttackPower(selfStats, buffs, slashBullet, undefined, withGB({ selfSpeed: 100 }));
+    const atkGB = calcAttackPower(selfStats, buffs, slashBullet, undefined, withGB([entry('速力', 'UP', 100, 0)]));
     expect(atkBase).toBe(3000);
     expect(atkGB).toBe(4000);
   });
 
   // ── 敵陽防デバフ ─────────────────────────────────────────
-  it('should apply enemy yang def debuff (50% DOWN → def * 0.5)', () => {
+  it('should apply enemy yang def debuff (selfDir=UP, enemy 50% DOWN → def * 0.5)', () => {
     const defBase = calcEnemyDefense(enemyStats, buffs, baseBullet);
-    const defGB = calcEnemyDefense(enemyStats, buffs, baseBullet, undefined, false, withGB({ enemyYangDef: -50 }));
+    const defGB = calcEnemyDefense(enemyStats, buffs, baseBullet, undefined, false, withGB([entry('陽防', 'UP', 0, 50)]));
     expect(defGB).toBeCloseTo(defBase * 0.5, 5);
   });
 
   it('should apply enemy yin def debuff only to yin bullets', () => {
     const yinBullet = { ...baseBullet, yinYang: '陰気' as const };
-    const bonus = withGB({ enemyYinDef: -30 });
+    const bonus = withGB([entry('陰防', 'UP', 0, 30)]);
 
     const defYang = calcEnemyDefense(enemyStats, buffs, baseBullet, undefined, false, bonus);
     const defYin = calcEnemyDefense(enemyStats, buffs, yinBullet, undefined, false, bonus);
     const defYinBase = calcEnemyDefense(enemyStats, buffs, yinBullet, undefined, false, baseBonus);
 
-    // 陽気弾に陰防デバフは効かない
     expect(defYang).toBe(calcEnemyDefense(enemyStats, buffs, baseBullet, undefined, false, baseBonus));
-    // 陰気弾には効く
     expect(defYin).toBeCloseTo(defYinBase * 0.7, 5);
   });
 
   // ── 大結界デバフはFB中も有効 ────────────────────────────
   it('should apply enemy def debuff even during full break', () => {
-    // FB中: 通常Rankデバフは無効。大結界は有効。
     const defFBnoGB = calcEnemyDefense(enemyStats, buffs, baseBullet, undefined, true, baseBonus);
-    const defFBwithGB = calcEnemyDefense(enemyStats, buffs, baseBullet, undefined, true, withGB({ enemyYangDef: -50 }));
-
-    // FB中 + 大結界50%ダウン = FB補正 * 0.5
+    const defFBwithGB = calcEnemyDefense(enemyStats, buffs, baseBullet, undefined, true, withGB([entry('陽防', 'UP', 0, 50)]));
     expect(defFBwithGB).toBeCloseTo(defFBnoGB * 0.5, 5);
   });
 
   it('normal rank debuffs are nullified during full break but great barrier is not', () => {
-    const buffsWithDebuff = {
-      ...createDefaultBuffStages(),
-      enemyYangDefR1: -5,
-    };
+    const buffsWithDebuff = { ...createDefaultBuffStages(), enemyYangDefR1: -5 };
 
-    // FB中: Rankデバフは無効 → 両者同値
     const defFBnoDebuff = calcEnemyDefense(enemyStats, buffs, baseBullet, undefined, true, baseBonus);
     const defFBwithDebuff = calcEnemyDefense(enemyStats, buffsWithDebuff, baseBullet, undefined, true, baseBonus);
     expect(defFBwithDebuff).toBe(defFBnoDebuff);
 
-    // 大結界はFB中でも有効
-    const defFBwithGB = calcEnemyDefense(enemyStats, buffs, baseBullet, undefined, true, withGB({ enemyYangDef: -50 }));
+    const defFBwithGB = calcEnemyDefense(enemyStats, buffs, baseBullet, undefined, true, withGB([entry('陽防', 'UP', 0, 50)]));
     expect(defFBwithGB).toBeLessThan(defFBnoDebuff);
   });
 
-  // ── CRI攻撃補正 ─────────────────────────────────────────
-  it('should apply CRI attack bonus only on critical hits', () => {
-    // CRI時にのみ (1 + 0.5) = 1.5倍
-    const dmgNonCrit = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', false, withGB({ criAttack: 50 }));
-    const dmgCrit = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', true, withGB({ criAttack: 50 }));
+  // ── selfDir=DOWN の場合、相手が UP になる ────────────────
+  it('should apply enemy def UP when selfDir=DOWN (enemy yang def * 1.5)', () => {
+    const defBase = calcEnemyDefense(enemyStats, buffs, baseBullet);
+    const defGB = calcEnemyDefense(enemyStats, buffs, baseBullet, undefined, false, withGB([entry('陽防', 'DOWN', 0, 50)]));
+    expect(defGB).toBeCloseTo(defBase * 1.5, 5);
+  });
 
+  // ── CRI攻撃補正 ─────────────────────────────────────────
+  it('should apply CRI attack self bonus only on critical hits', () => {
+    const dmgNonCrit = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', false, withGB([entry('CRI攻撃/CRI防御', 'UP', 50, 0)]));
+    const dmgCrit = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', true, withGB([entry('CRI攻撃/CRI防御', 'UP', 50, 0)]));
     const dmgNonCritBase = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', false, baseBonus);
     const dmgCritBase = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', true, baseBonus);
 
-    // 非CRI時は影響なし
     expect(dmgNonCrit).toBe(dmgNonCritBase);
-    // CRI時は 1.5倍
     expect(dmgCrit).toBe(Math.floor(dmgCritBase * 1.5));
   });
 
   // ── 敵CRI防御デバフ ─────────────────────────────────────
   it('should apply enemy CRI defense debuff only on critical hits (50% DOWN → CRI damage * 1.5)', () => {
-    const dmgNonCrit = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', false, withGB({ enemyCriDef: -50 }));
-    const dmgCrit = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', true, withGB({ enemyCriDef: -50 }));
-
+    const dmgNonCrit = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', false, withGB([entry('CRI攻撃/CRI防御', 'UP', 0, 50)]));
+    const dmgCrit = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', true, withGB([entry('CRI攻撃/CRI防御', 'UP', 0, 50)]));
     const dmgNonCritBase = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', false, baseBonus);
     const dmgCritBase = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', true, baseBonus);
 
@@ -183,11 +185,21 @@ describe('GreatBarrier Logic Tests', () => {
     expect(dmgCrit).toBe(Math.floor(dmgCritBase * 1.5));
   });
 
-  // ── CRI攻撃 + CRI防御デバフ複合 ─────────────────────────
-  it('should stack CRI attack and enemy CRI defense debuff multiplicatively', () => {
-    // CRI攻撃50%UP × 敵CRI防御50%DOWN = 1.5 × 1.5 = 2.25
+  // ── CRI自身 + CRI敵複合 ─────────────────────────────────
+  it('should stack CRI self and enemy debuff multiplicatively (1.5 * 1.5 = 2.25)', () => {
     const dmgCritBase = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', true, baseBonus);
-    const dmgCritGB = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', true, withGB({ criAttack: 50, enemyCriDef: -50 }));
+    const dmgCritGB = calcSingleHitDamage(baseBullet, selfStats, enemyStats, buffs, false, '等倍', true, withGB([entry('CRI攻撃/CRI防御', 'UP', 50, 50)]));
     expect(dmgCritGB).toBe(Math.floor(dmgCritBase * 2.25));
+  });
+
+  // ── 複数エントリの積算 ────────────────────────────────────
+  it('should multiply multiple entries for the same stat', () => {
+    const atkBase = calcAttackPower(selfStats, buffs, baseBullet, undefined, baseBonus);
+    // 陽攻 30%UP * 陽攻 20%UP = 1.3 * 1.2 = 1.56
+    const atkGB = calcAttackPower(selfStats, buffs, baseBullet, undefined, withGB([
+      entry('陽攻', 'UP', 30, 0),
+      entry('陽攻', 'UP', 20, 0),
+    ]));
+    expect(atkGB).toBe(Math.floor(atkBase * 1.56));
   });
 });

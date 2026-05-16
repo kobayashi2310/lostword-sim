@@ -4,7 +4,8 @@ import type {
   DamageBonus,
   ElementalAdvantage,
   EnemyStats,
-  GreatBarrierConfig,
+  GreatBarrierEntry,
+  GreatBarrierStatType,
   SelfStats,
   BarrierAilmentType,
 } from '@/types';
@@ -30,6 +31,39 @@ import {
   getAccumulationSum,
   isAilmentNullified,
 } from './stats';
+
+// ============================================================
+// 大結界ヘルパー
+// ============================================================
+
+function calcGbSelfMult(entries: GreatBarrierEntry[], stat: GreatBarrierStatType): number {
+  return entries
+    .filter((e) => e.stat === stat)
+    .reduce(
+      (m, e) => m * (e.selfDir === 'UP' ? 1 + e.selfValue / 100 : 1 - e.selfValue / 100),
+      1,
+    );
+}
+
+// 物理防御系 (陽防/陰防) の敵側: DOWN → 敵防御 × (1 − n/100)
+function calcGbEnemyDefMult(entries: GreatBarrierEntry[], stat: GreatBarrierStatType): number {
+  return entries
+    .filter((e) => e.stat === stat)
+    .reduce(
+      (m, e) => m * (e.selfDir === 'UP' ? 1 - e.enemyValue / 100 : 1 + e.enemyValue / 100),
+      1,
+    );
+}
+
+// CRI攻撃/CRI防御の敵側: 敵CRI防御DOWN → CRI時ダメ × (1 + n/100)
+function calcGbCriEnemyMult(entries: GreatBarrierEntry[]): number {
+  return entries
+    .filter((e) => e.stat === 'CRI攻撃/CRI防御')
+    .reduce(
+      (m, e) => m * (e.selfDir === 'UP' ? 1 + e.enemyValue / 100 : 1 - e.enemyValue / 100),
+      1,
+    );
+}
 
 // ============================================================
 // 属性相性倍率
@@ -112,10 +146,10 @@ export function calcAttackPower(
   );
 
   // 大結界補正 (別枠乗算)
-  const gb: GreatBarrierConfig | null | undefined = damageBonus.greatBarrier;
-  const gbAtkMult = gb ? 1 + (isYang ? gb.selfYangAttack : gb.selfYinAttack) / 100 : 1;
-  const gbSpdMult = gb ? 1 + gb.selfSpeed / 100 : 1;
-  const gbDefMult = gb ? 1 + (isYang ? gb.selfYangDef : gb.selfYinDef) / 100 : 1;
+  const gb = damageBonus.greatBarrier;
+  const gbAtkMult = gb ? calcGbSelfMult(gb.entries, isYang ? '陽攻' : '陰攻') : 1;
+  const gbSpdMult = gb ? calcGbSelfMult(gb.entries, '速力') : 1;
+  const gbDefMult = gb ? calcGbSelfMult(gb.entries, isYang ? '陽防' : '陰防') : 1;
 
   // 共鳴補正 (速力のみ別枠乗算あり)
   const speedResonanceBonus = (damageBonus.resonanceEffects || [])
@@ -184,7 +218,7 @@ export function calcEnemyDefense(
 
   // 3. 大結界補正 (別枠乗算・FB中も有効)
   const gb = damageBonus?.greatBarrier;
-  const gbMult = gb ? 1 + (isYang ? gb.enemyYangDef : gb.enemyYinDef) / 100 : 1;
+  const gbMult = gb ? calcGbEnemyDefMult(gb.entries, isYang ? '陽防' : '陰防') : 1;
 
   return baseDef * fbMult * totalRankAilmentMult * gbMult;
 }
@@ -285,10 +319,13 @@ export function calcSingleHitDamage(
 
   // 大結界補正 (威力・CRI)
   const gb = damageBonus.greatBarrier;
-  const effectivePower = gb ? bullet.power * (1 + gb.powerBonus / 100) : bullet.power;
+  // 威力補正後は少数第3位以下切り捨て
+  const effectivePower = gb
+    ? Math.floor(bullet.power * calcGbSelfMult(gb.entries, '威力') * 100) / 100
+    : bullet.power;
   const gbCriMult =
     isCrit && gb
-      ? (1 + gb.criAttack / 100) * (1 - gb.enemyCriDef / 100)
+      ? calcGbSelfMult(gb.entries, 'CRI攻撃/CRI防御') * calcGbCriEnemyMult(gb.entries)
       : 1;
 
   return Math.floor(

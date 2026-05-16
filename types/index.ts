@@ -407,32 +407,31 @@ export function calcAccumulationValue(eff: AccumulationEffect): number {
 // 大結界（特殊バフ）
 // ============================================================
 
+export type GreatBarrierStatType =
+  | '陽攻'
+  | '陰攻'
+  | '速力'
+  | '陽防'
+  | '陰防'
+  | 'CRI攻撃/CRI防御'
+  | '威力';
+
+export type GreatBarrierDir = 'UP' | 'DOWN';
+
+export interface GreatBarrierEntry {
+  id: number;
+  stat: GreatBarrierStatType;
+  selfValue: number;          // % (>= 0)
+  selfDir: GreatBarrierDir;   // 味方側の方向; 相手側は常に逆
+  enemyValue: number;         // % (>= 0)
+}
+
 export interface GreatBarrierConfig {
-  selfYangAttack: number;  // 自身陽攻補正 (%, 正=UP/負=DOWN)
-  selfYinAttack: number;   // 自身陰攻補正 (%)
-  selfSpeed: number;       // 自身速力補正 (%)
-  selfYangDef: number;     // 自身陽防補正 (%)
-  selfYinDef: number;      // 自身陰防補正 (%)
-  enemyYangDef: number;    // 敵陽防補正 (%, FB中も有効)
-  enemyYinDef: number;     // 敵陰防補正 (%, FB中も有効)
-  criAttack: number;       // CRI攻撃補正 (%, CRI時ダメ乗算)
-  enemyCriDef: number;     // 敵CRI防御補正 (%, 負=CRI時ダメアップ)
-  powerBonus: number;      // 威力補正 (%)
+  entries: GreatBarrierEntry[];
 }
 
 export function createDefaultGreatBarrierConfig(): GreatBarrierConfig {
-  return {
-    selfYangAttack: 0,
-    selfYinAttack: 0,
-    selfSpeed: 0,
-    selfYangDef: 0,
-    selfYinDef: 0,
-    enemyYangDef: 0,
-    enemyYinDef: 0,
-    criAttack: 0,
-    enemyCriDef: 0,
-    powerBonus: 0,
-  };
+  return { entries: [] };
 }
 
 export function createDefaultDamageBonus(): DamageBonus {

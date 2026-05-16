@@ -27,4 +27,25 @@ export const DEFAULT_STORY_CARDS: StoryCard[] = [
       },
     ],
   },
+  {
+    id: 'summer-monster',
+    name: 'サマーモンスター',
+    stats: {
+      yangAttack: 60,
+      speed: 120,
+    },
+    effects: [
+      {
+        kind: '対象デバフ',
+        target: '陽防',
+        value: 4,
+        condition: '攻撃式',
+      },
+      {
+        kind: '霊力上昇',
+        target: '霊力',
+        value: 2.25,
+      },
+    ],
+  },
 ];

@@ -164,6 +164,20 @@ export function useSimulation() {
             const currentBonus = bulletKindBonus[bk] ?? 0;
             bulletKindBonus[bk] = currentBonus + effect.value;
             finalDamageBonus.bulletKindBonus = bulletKindBonus;
+          } else if (effect.kind === '対象デバフ') {
+            const fieldMap: Record<string, keyof BuffStages> = {
+              陽防: 'enemyYangDefR1',
+              陰防: 'enemyYinDefR1',
+              CRI防御: 'enemyCriDefR1',
+              CRI回避: 'enemyCriEvasionR1',
+            };
+            const field = fieldMap[effect.target];
+            if (field) {
+              finalInitialBuffs[field] = Math.max(
+                -10,
+                Math.min(10, (finalInitialBuffs[field] as number) - effect.value),
+              );
+            }
           }
         }
       }

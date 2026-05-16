@@ -21,6 +21,8 @@ export default function StoryCardSelector({
   const { searchQuery, setSearchQuery, filterTags, toggleTag, filteredCards, allTags } =
     useStoryCards(db.cards);
 
+  const isDev = process.env.NODE_ENV === 'development';
+
   const [activeSlot, setActiveSlot] = React.useState(0);
   const [tab, setTab] = React.useState<'equip' | 'manage'>('equip');
 
@@ -32,9 +34,9 @@ export default function StoryCardSelector({
 
   return (
     <div className="space-y-4">
-      {/* タブ切り替え */}
+      {/* タブ切り替え (管理タブは開発環境のみ) */}
       <div className="flex border-b border-gray-200 dark:border-gray-700">
-        {(['equip', 'manage'] as const).map((t) => (
+        {(['equip', ...(isDev ? (['manage'] as const) : [])] as const).map((t) => (
           <button
             key={t}
             type="button"

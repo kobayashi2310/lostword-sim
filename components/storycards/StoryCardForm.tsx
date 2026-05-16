@@ -55,11 +55,16 @@ interface StatEntry {
   value: number;
 }
 
-function initialStats(card?: StoryCard): StatEntry[] {
-  if (!card) return [];
-  return (Object.entries(card.stats) as [StatKey, number][])
-    .filter(([, v]) => v !== undefined)
-    .map(([key, value]) => ({ key, value }));
+function initialStats(card?: StoryCard): [StatEntry, StatEntry] {
+  const entries = card
+    ? (Object.entries(card.stats) as [StatKey, number][])
+        .filter(([, v]) => v !== undefined)
+        .map(([key, value]) => ({ key, value }))
+    : [];
+  return [
+    entries[0] ?? { key: 'yangAttack' as StatKey, value: 0 },
+    entries[1] ?? { key: 'yinAttack' as StatKey, value: 0 },
+  ];
 }
 
 function emptyEffect(): StoryCardEffect {
@@ -74,33 +79,29 @@ interface Props {
 
 export default function StoryCardForm({ initial, onSave, onCancel }: Props) {
   const [name, setName] = useState(initial?.name ?? '');
-  const [statEntries, setStatEntries] = useState<StatEntry[]>(() => initialStats(initial));
-  const [effects, setEffects] = useState<StoryCardEffect[]>(initial?.effects ?? []);
+  const [statEntries, setStatEntries] = useState<[StatEntry, StatEntry]>(() => initialStats(initial));
+  const [effects, setEffects] = useState<StoryCardEffect[]>(
+    initial?.effects?.length ? initial.effects : [emptyEffect()],
+  );
 
-  // ステータス操作
-  const addStat = () => {
-    if (statEntries.length >= MAX_STATS) return;
-    const used = new Set(statEntries.map((e) => e.key));
-    const next = STAT_KEYS.find((k) => !used.has(k));
-    if (next) setStatEntries((prev) => [...prev, { key: next, value: 0 }]);
-  };
+  // ステータス操作（2枠固定）
+  const updateStat = (i: 0 | 1, patch: Partial<StatEntry>) =>
+    setStatEntries((prev) => {
+      const next: [StatEntry, StatEntry] = [{ ...prev[0] }, { ...prev[1] }];
+      next[i] = { ...next[i], ...patch };
+      return next;
+    });
 
-  const removeStat = (i: number) =>
-    setStatEntries((prev) => prev.filter((_, idx) => idx !== i));
-
-  const updateStat = (i: number, patch: Partial<StatEntry>) =>
-    setStatEntries((prev) =>
-      prev.map((e, idx) => (idx === i ? { ...e, ...patch } : e)),
-    );
-
-  // 効果操作
+  // 効果操作（最低1件）
   const addEffect = () => {
     if (effects.length >= MAX_EFFECTS) return;
     setEffects((prev) => [...prev, emptyEffect()]);
   };
 
-  const removeEffect = (i: number) =>
+  const removeEffect = (i: number) => {
+    if (effects.length <= 1) return;
     setEffects((prev) => prev.filter((_, idx) => idx !== i));
+  };
 
   const updateEffect = (i: number, patch: Partial<StoryCardEffect>) =>
     setEffects((prev) =>
@@ -131,6 +132,7 @@ export default function StoryCardForm({ initial, onSave, onCancel }: Props) {
   };
 
   const usedStatKeys = new Set(statEntries.map((e) => e.key));
+  const canRemoveEffect = effects.length > 1;
 
   return (
     <div className="border border-blue-400 dark:border-blue-600 rounded-lg p-4 bg-blue-50/40 dark:bg-blue-900/10 space-y-4">
@@ -150,20 +152,18 @@ export default function StoryCardForm({ initial, onSave, onCancel }: Props) {
         />
       </div>
 
-      {/* ステータス補正 (最大2件) */}
+      {/* ステータス補正 (2枠固定) */}
       <div className="space-y-1.5">
-        <p className="text-[10px] text-gray-400 uppercase tracking-wider">
-          ステータス補正 ({statEntries.length}/{MAX_STATS})
-        </p>
-        {statEntries.map((entry, i) => (
+        <p className="text-[10px] text-gray-400 uppercase tracking-wider">ステータス補正</p>
+        {([0, 1] as const).map((i) => (
           <div key={i} className="flex items-center gap-1.5">
             <select
-              value={entry.key}
+              value={statEntries[i].key}
               onChange={(e) => updateStat(i, { key: e.target.value as StatKey })}
               className={selectCls}
             >
               {STAT_KEYS.map((k) => (
-                <option key={k} value={k} disabled={usedStatKeys.has(k) && k !== entry.key}>
+                <option key={k} value={k} disabled={usedStatKeys.has(k) && k !== statEntries[i].key}>
                   {STAT_LABELS[k]}
                 </option>
               ))}
@@ -172,32 +172,16 @@ export default function StoryCardForm({ initial, onSave, onCancel }: Props) {
             <input
               type="number"
               min={0}
-              value={entry.value || ''}
+              value={statEntries[i].value || ''}
               onChange={(e) => updateStat(i, { value: Number(e.target.value) })}
               placeholder="0"
               className={`${inputCls} w-20 text-right`}
             />
-            <button
-              type="button"
-              onClick={() => removeStat(i)}
-              className="text-red-400 hover:text-red-600 text-xs px-1"
-            >
-              ✕
-            </button>
           </div>
         ))}
-        {statEntries.length < MAX_STATS && (
-          <button
-            type="button"
-            onClick={addStat}
-            className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            + ステータスを追加
-          </button>
-        )}
       </div>
 
-      {/* 効果 (最大3件) */}
+      {/* 効果 (1〜3件) */}
       <div className="space-y-2">
         <p className="text-[10px] text-gray-400 uppercase tracking-wider">
           効果 ({effects.length}/{MAX_EFFECTS})
@@ -261,13 +245,15 @@ export default function StoryCardForm({ initial, onSave, onCancel }: Props) {
                 ))}
               </select>
 
-              <button
-                type="button"
-                onClick={() => removeEffect(i)}
-                className="text-red-400 hover:text-red-600 text-xs px-1"
-              >
-                ✕
-              </button>
+              {canRemoveEffect && (
+                <button
+                  type="button"
+                  onClick={() => removeEffect(i)}
+                  className="text-red-400 hover:text-red-600 text-xs px-1"
+                >
+                  ✕
+                </button>
+              )}
             </div>
           );
         })}

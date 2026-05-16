@@ -4,6 +4,7 @@ import type {
   DamageBonus,
   ElementalAdvantage,
   EnemyStats,
+  GreatBarrierConfig,
   SelfStats,
   BarrierAilmentType,
 } from '@/types';
@@ -110,19 +111,25 @@ export function calcAttackPower(
     getAccumulationSum(damageBonus, isYang ? 'yangDefense' : 'yinDefense'),
   );
 
+  // 大結界補正 (別枠乗算)
+  const gb: GreatBarrierConfig | null | undefined = damageBonus.greatBarrier;
+  const gbAtkMult = gb ? 1 + (isYang ? gb.selfYangAttack : gb.selfYinAttack) / 100 : 1;
+  const gbSpdMult = gb ? 1 + gb.selfSpeed / 100 : 1;
+  const gbDefMult = gb ? 1 + (isYang ? gb.selfYangDef : gb.selfYinDef) / 100 : 1;
+
   // 共鳴補正 (速力のみ別枠乗算あり)
   const speedResonanceBonus = (damageBonus.resonanceEffects || [])
     .filter((e) => e.kind === '速力')
     .reduce((sum, e) => sum + e.value, 0);
-  const effectiveSpeed = speed * (1 + speedResonanceBonus / 100);
+  const effectiveSpeed = speed * gbSpdMult * (1 + speedResonanceBonus / 100);
 
   const slashComponent =
     bullet.slashPercent > 0 ? effectiveSpeed * (bullet.slashPercent / 100) : 0;
 
   const hardComponent =
-    bullet.hardPercent > 0 ? selfDefense * (bullet.hardPercent / 100) : 0;
+    bullet.hardPercent > 0 ? selfDefense * gbDefMult * (bullet.hardPercent / 100) : 0;
 
-  return attackPower + slashComponent + hardComponent;
+  return attackPower * gbAtkMult + slashComponent + hardComponent;
 }
 
 // ============================================================
@@ -141,6 +148,7 @@ export function calcEnemyDefense(
     暗闇: 0,
   },
   isFullBreak: boolean = false,
+  damageBonus?: DamageBonus | null,
 ): number {
   const isYang = bullet.yinYang === '陽気';
   const baseDef = isYang ? enemyStats.yangDefense : enemyStats.yinDefense;
@@ -174,7 +182,11 @@ export function calcEnemyDefense(
     totalRankAilmentMult = isFullBreak ? 1.0 : multiplier;
   }
 
-  return baseDef * fbMult * totalRankAilmentMult;
+  // 3. 大結界補正 (別枠乗算・FB中も有効)
+  const gb = damageBonus?.greatBarrier;
+  const gbMult = gb ? 1 + (isYang ? gb.enemyYangDef : gb.enemyYinDef) / 100 : 1;
+
+  return baseDef * fbMult * totalRankAilmentMult * gbMult;
 }
 
 // ============================================================
@@ -227,6 +239,7 @@ export function calcSingleHitDamage(
     bullet,
     enemyAilments,
     isFullBreak,
+    damageBonus,
   );
 
   if (enemyDefense <= 0) return 0;
@@ -270,13 +283,22 @@ export function calcSingleHitDamage(
   const resonanceMult =
     (1 + resDamageBonus / 100) * (1 + resCriDamageBonus / 100);
 
+  // 大結界補正 (威力・CRI)
+  const gb = damageBonus.greatBarrier;
+  const effectivePower = gb ? bullet.power * (1 + gb.powerBonus / 100) : bullet.power;
+  const gbCriMult =
+    isCrit && gb
+      ? (1 + gb.criAttack / 100) * (1 - gb.enemyCriDef / 100)
+      : 1;
+
   return Math.floor(
-    bullet.power *
+    effectivePower *
       (attackPower / enemyDefense) *
       baseFactor *
       0.4 *
       elementalMult *
       critMult *
+      gbCriMult *
       bonusMult *
       chargeMult *
       resonanceMult,

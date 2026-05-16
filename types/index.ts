@@ -371,6 +371,7 @@ export interface DamageBonus {
   chargeEffects: ChargeEffect[];
   accumulationEffects: AccumulationEffect[];
   resonanceEffects: ResonanceEffect[];
+  greatBarrier?: GreatBarrierConfig | null;
 }
 
 export type ResonanceKind =
@@ -402,6 +403,38 @@ export function calcAccumulationValue(eff: AccumulationEffect): number {
   return Math.floor((eff.sourceValue * eff.rate) / 100);
 }
 
+// ============================================================
+// 大結界（特殊バフ）
+// ============================================================
+
+export interface GreatBarrierConfig {
+  selfYangAttack: number;  // 自身陽攻補正 (%, 正=UP/負=DOWN)
+  selfYinAttack: number;   // 自身陰攻補正 (%)
+  selfSpeed: number;       // 自身速力補正 (%)
+  selfYangDef: number;     // 自身陽防補正 (%)
+  selfYinDef: number;      // 自身陰防補正 (%)
+  enemyYangDef: number;    // 敵陽防補正 (%, FB中も有効)
+  enemyYinDef: number;     // 敵陰防補正 (%, FB中も有効)
+  criAttack: number;       // CRI攻撃補正 (%, CRI時ダメ乗算)
+  enemyCriDef: number;     // 敵CRI防御補正 (%, 負=CRI時ダメアップ)
+  powerBonus: number;      // 威力補正 (%)
+}
+
+export function createDefaultGreatBarrierConfig(): GreatBarrierConfig {
+  return {
+    selfYangAttack: 0,
+    selfYinAttack: 0,
+    selfSpeed: 0,
+    selfYangDef: 0,
+    selfYinDef: 0,
+    enemyYangDef: 0,
+    enemyYinDef: 0,
+    criAttack: 0,
+    enemyCriDef: 0,
+    powerBonus: 0,
+  };
+}
+
 export function createDefaultDamageBonus(): DamageBonus {
   return {
     elementBonus: {},
@@ -411,6 +444,7 @@ export function createDefaultDamageBonus(): DamageBonus {
     chargeEffects: [],
     accumulationEffects: [],
     resonanceEffects: [],
+    greatBarrier: null,
   };
 }
 

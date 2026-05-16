@@ -4,11 +4,13 @@ import type {
   ChargeEffect,
   DamageBonus,
   AccumulationEffect,
+  GreatBarrierConfig,
   ResonanceEffect,
 } from '@/types';
 import ChargeBuffSection from './ChargeBuffSection';
 import ResonanceBuffSection from './ResonanceBuffSection';
 import AccumulationBuffSection from './AccumulationBuffSection';
+import GreatBarrierSection from './GreatBarrierSection';
 
 interface Props {
   damageBonus: DamageBonus;
@@ -20,6 +22,7 @@ export default function SpecialBuffInput({ damageBonus, onChange }: Props) {
     chargeEffects,
     accumulationEffects = [],
     resonanceEffects = [],
+    greatBarrier = null,
   } = damageBonus;
 
   const updateBonus = (updates: Partial<DamageBonus>) => {
@@ -36,6 +39,10 @@ export default function SpecialBuffInput({ damageBonus, onChange }: Props) {
 
   const handleAccumulationChange = (effects: AccumulationEffect[]) => {
     updateBonus({ accumulationEffects: effects });
+  };
+
+  const handleGreatBarrierChange = (gb: GreatBarrierConfig | null) => {
+    updateBonus({ greatBarrier: gb });
   };
 
   return (
@@ -60,6 +67,14 @@ export default function SpecialBuffInput({ damageBonus, onChange }: Props) {
       <AccumulationBuffSection
         effects={accumulationEffects}
         onChange={handleAccumulationChange}
+      />
+
+      <div className="border-t border-gray-100 dark:border-gray-800 my-4" />
+
+      {/* 大結界セクション */}
+      <GreatBarrierSection
+        greatBarrier={greatBarrier}
+        onChange={handleGreatBarrierChange}
       />
     </div>
   );

@@ -92,6 +92,7 @@ export default function Home() {
             <StoryCardSelector
               equippedCards={equippedStoryCards}
               onCardsChange={setEquippedStoryCards}
+              bullets={bullets}
             />
           </div>
         );

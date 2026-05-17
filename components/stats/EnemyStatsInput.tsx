@@ -102,13 +102,15 @@ export default function EnemyStatsInput({ stats, onChange }: Props) {
           </div>
         )}
 
-        {/* 敵の能力設定 */}
-        <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
-          <h4 className="text-[11px] font-semibold text-gray-400 uppercase mb-2 tracking-wider">
-            敵の能力（バフ変換・無効化）
-          </h4>
-          <AbilityInput ability={stats.ability} onChange={set('ability')} />
-        </div>
+        {/* 敵の能力設定（結界ありのときのみ表示） */}
+        {stats.hasBarriers && (
+          <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+            <h4 className="text-[11px] font-semibold text-gray-400 uppercase mb-2 tracking-wider">
+              敵の能力（バフ変換・無効化）
+            </h4>
+            <AbilityInput ability={stats.ability} onChange={set('ability')} />
+          </div>
+        )}
       </div>
     </div>
   );

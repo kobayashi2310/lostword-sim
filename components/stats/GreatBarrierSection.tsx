@@ -130,10 +130,12 @@ export default function GreatBarrierSection({ greatBarrier, onChange }: Props) {
                     type="number"
                     step={1}
                     min={0}
+                    max={entry.selfDir === 'DOWN' ? 100 : undefined}
                     value={entry.selfValue}
                     onChange={(e) => {
                       const n = Number(e.target.value);
-                      const v = Number.isFinite(n) && n >= 0 ? n : 0;
+                      const max = entry.selfDir === 'DOWN' ? 100 : Infinity;
+                      const v = Number.isFinite(n) && n >= 0 ? Math.min(n, max) : 0;
                       updateEntry(entry.id, { selfValue: v, enemyValue: v });
                     }}
                     className={numCls}
@@ -157,10 +159,12 @@ export default function GreatBarrierSection({ greatBarrier, onChange }: Props) {
                     type="number"
                     step={1}
                     min={0}
+                    max={oppDir(entry.selfDir) === 'DOWN' ? 100 : undefined}
                     value={entry.enemyValue}
                     onChange={(e) => {
                       const n = Number(e.target.value);
-                      const v = Number.isFinite(n) && n >= 0 ? n : 0;
+                      const max = oppDir(entry.selfDir) === 'DOWN' ? 100 : Infinity;
+                      const v = Number.isFinite(n) && n >= 0 ? Math.min(n, max) : 0;
                       updateEntry(entry.id, { selfValue: v, enemyValue: v });
                     }}
                     className={numCls}

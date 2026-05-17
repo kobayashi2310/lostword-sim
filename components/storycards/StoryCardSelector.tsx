@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { StoryCard } from '@/types';
+import type { Bullet, StoryCard } from '@/types';
 import { useStoryCards } from '@/lib/hooks/useStoryCards';
 import { useStoryCardDatabase } from '@/lib/hooks/useStoryCardDatabase';
 import StoryCardManager from './StoryCardManager';
@@ -9,11 +9,28 @@ import StoryCardManager from './StoryCardManager';
 interface Props {
   equippedCards: (StoryCard | null)[];
   onCardsChange: (cards: (StoryCard | null)[]) => void;
+  bullets: Bullet[];
+}
+
+function deriveBulletChips(bullets: Bullet[]): string[] {
+  const seen = new Set<string>();
+  const chips: string[] = [];
+  for (const b of bullets) {
+    const yinYangLabel = b.yinYang === '陽気' ? '陽攻' : '陰攻';
+    for (const chip of [b.element, b.bulletKind, yinYangLabel]) {
+      if (chip !== '無' && !seen.has(chip)) {
+        seen.add(chip);
+        chips.push(chip);
+      }
+    }
+  }
+  return chips;
 }
 
 export default function StoryCardSelector({
   equippedCards,
   onCardsChange,
+  bullets,
 }: Props) {
   const db = useStoryCardDatabase();
   const { searchQuery, setSearchQuery, filteredCards } = useStoryCards(
@@ -21,6 +38,7 @@ export default function StoryCardSelector({
   );
 
   const isDev = process.env.NODE_ENV === 'development';
+  const bulletChips = React.useMemo(() => deriveBulletChips(bullets), [bullets]);
 
   const [activeSlot, setActiveSlot] = React.useState(0);
   const [tab, setTab] = React.useState<'equip' | 'manage'>('equip');
@@ -116,11 +134,31 @@ export default function StoryCardSelector({
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
               絵札を探す (SLOT {activeSlot + 1} に装備)
             </h3>
+            {bulletChips.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {bulletChips.map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() =>
+                      setSearchQuery(searchQuery === chip ? '' : chip)
+                    }
+                    className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                      searchQuery === chip
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-400'
+                    }`}
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            )}
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="絵札名で検索..."
+              placeholder="絵札名・効果・ステータスで検索..."
               className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>

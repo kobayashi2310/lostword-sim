@@ -17,11 +17,12 @@ async function fetchCards(): Promise<StoryCard[]> {
 }
 
 async function saveCards(cards: StoryCard[]): Promise<void> {
-  await fetch(API, {
+  const res = await fetch(API, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(cards),
   });
+  if (!res.ok) throw new Error(`save failed: ${res.status}`);
 }
 
 const defaultIds = new Set(DEFAULT_STORY_CARDS.map((c) => c.id));
@@ -33,24 +34,29 @@ export function useStoryCardDatabase() {
     fetchCards().then(setCards);
   }, []);
 
-  const persist = useCallback(async (next: StoryCard[]) => {
+  const persist = useCallback(async (next: StoryCard[], prev: StoryCard[]) => {
     setCards(next);
-    await saveCards(next);
+    try {
+      await saveCards(next);
+    } catch (e) {
+      console.error(e);
+      setCards(prev);
+    }
   }, []);
 
   const addCard = useCallback(
-    (card: StoryCard) => persist([...cards, card]),
+    (card: StoryCard) => persist([...cards, card], cards),
     [cards, persist],
   );
 
   const updateCard = useCallback(
     (card: StoryCard) =>
-      persist(cards.map((c) => (c.id === card.id ? card : c))),
+      persist(cards.map((c) => (c.id === card.id ? card : c)), cards),
     [cards, persist],
   );
 
   const deleteCard = useCallback(
-    (id: string) => persist(cards.filter((c) => c.id !== id)),
+    (id: string) => persist(cards.filter((c) => c.id !== id), cards),
     [cards, persist],
   );
 

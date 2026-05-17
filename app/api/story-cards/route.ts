@@ -15,8 +15,12 @@ export async function GET() {
   const guard = devOnly();
   if (guard) return guard;
 
-  const raw = await fs.readFile(JSON_PATH, 'utf-8');
-  return NextResponse.json(JSON.parse(raw));
+  try {
+    const raw = await fs.readFile(JSON_PATH, 'utf-8');
+    return NextResponse.json(JSON.parse(raw));
+  } catch {
+    return NextResponse.json({ error: 'failed to read file' }, { status: 500 });
+  }
 }
 
 export async function PUT(request: Request) {
@@ -28,6 +32,10 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: 'invalid body' }, { status: 400 });
   }
 
-  await fs.writeFile(JSON_PATH, JSON.stringify(body, null, 2), 'utf-8');
-  return NextResponse.json({ ok: true });
+  try {
+    await fs.writeFile(JSON_PATH, JSON.stringify(body, null, 2), 'utf-8');
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: 'failed to write file' }, { status: 500 });
+  }
 }

@@ -119,8 +119,8 @@ export function useSimulation() {
       }
 
       // 絵札の効果をシミュレーション用に統合
-      let finalInitialBuffs = { ...buffs };
-      let finalDamageBonus = { ...damageBonus };
+      const finalInitialBuffs = { ...buffs };
+      const finalDamageBonus = { ...damageBonus };
 
       // 効果は1枚目 (スロット0) のみ適用
       const mainCard = equippedStoryCards[0];
@@ -170,12 +170,16 @@ export function useSimulation() {
               陰防: 'enemyYinDefR1',
               CRI防御: 'enemyCriDefR1',
               CRI回避: 'enemyCriEvasionR1',
+              回避: 'enemyEvasionR1',
             };
             const field = fieldMap[effect.target];
             if (field) {
               finalInitialBuffs[field] = Math.max(
                 -10,
-                Math.min(10, (finalInitialBuffs[field] as number) - effect.value),
+                Math.min(
+                  10,
+                  (finalInitialBuffs[field] as number) - effect.value,
+                ),
               );
             }
           }
@@ -194,7 +198,13 @@ export function useSimulation() {
             yinDefense: acc.yinDefense + (card.stats.yinDefense ?? 0),
           };
         },
-        { yangAttack: 0, yinAttack: 0, speed: 0, yangDefense: 0, yinDefense: 0 },
+        {
+          yangAttack: 0,
+          yinAttack: 0,
+          speed: 0,
+          yangDefense: 0,
+          yinDefense: 0,
+        },
       );
 
       const finalSelfStats: SelfStats = {

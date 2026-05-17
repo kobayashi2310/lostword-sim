@@ -92,7 +92,6 @@ export default function Home() {
             <StoryCardSelector
               equippedCards={equippedStoryCards}
               onCardsChange={setEquippedStoryCards}
-              characterClass={selfStats.characterClass}
             />
           </div>
         );

@@ -3,43 +3,45 @@
 import { useMemo, useState } from 'react';
 import type { StoryCard } from '@/types';
 
+const STAT_LABEL: Record<string, string> = {
+  yangAttack: '陽攻',
+  yinAttack: '陰攻',
+  speed: '速力',
+  yangDefense: '陽防',
+  yinDefense: '陰防',
+};
+
+function cardSearchText(card: StoryCard): string {
+  const parts: string[] = [card.name];
+
+  // ステータス名
+  for (const key of Object.keys(card.stats)) {
+    if (STAT_LABEL[key]) parts.push(STAT_LABEL[key]);
+  }
+
+  // 効果 (種別・対象・条件)
+  for (const eff of card.effects) {
+    parts.push(eff.kind, eff.target);
+    if (eff.condition) parts.push(eff.condition);
+  }
+
+  return parts.join(' ').toLowerCase();
+}
+
 export function useStoryCards(cards: StoryCard[]) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterTags, setFilterTags] = useState<string[]>([]);
+
+  // カードごとの検索文字列をメモ化
+  const searchTexts = useMemo(
+    () => cards.map((card) => cardSearchText(card)),
+    [cards],
+  );
 
   const filteredCards = useMemo(() => {
-    return cards.filter((card) => {
-      const matchName = card.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchTags =
-        filterTags.length === 0 ||
-        filterTags.every((tag) =>
-          card.effects.some((eff) => `${eff.kind}${eff.target}`.includes(tag)),
-        );
-      return matchName && matchTags;
-    });
-  }, [cards, searchQuery, filterTags]);
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return [];
+    return cards.filter((_, i) => searchTexts[i].includes(q));
+  }, [cards, searchTexts, searchQuery]);
 
-  const allTags = useMemo(() => {
-    const tags = new Set<string>();
-    cards.forEach((card) => {
-      card.effects.forEach((eff) => {
-        if (eff.kind === '自身バフ' || eff.kind === '対象デバフ') {
-          tags.add(`${eff.target}UP`);
-        } else if (eff.kind === '属性ダメージUP') {
-          tags.add(`${eff.target}属性UP`);
-        } else if (eff.kind === '弾種ダメージUP') {
-          tags.add(`${eff.target}UP`);
-        }
-      });
-    });
-    return Array.from(tags).sort();
-  }, [cards]);
-
-  const toggleTag = (tag: string) => {
-    setFilterTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
-    );
-  };
-
-  return { searchQuery, setSearchQuery, filterTags, toggleTag, filteredCards, allTags };
+  return { searchQuery, setSearchQuery, filteredCards };
 }

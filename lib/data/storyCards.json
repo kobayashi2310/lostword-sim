@@ -45,5 +45,81 @@
         "value": 2.25
       }
     ]
+  },
+  {
+    "id": "0ed6282c-8e2d-49bd-8bbe-972d0f7a72a0",
+    "name": "紅魔の魔女の新年",
+    "stats": {
+      "yangAttack": 90,
+      "speed": 60
+    },
+    "effects": [
+      {
+        "kind": "属性ダメージUP",
+        "target": "星",
+        "value": 50
+      },
+      {
+        "kind": "弾種ダメージUP",
+        "target": "肉弾",
+        "value": 50
+      },
+      {
+        "kind": "対象デバフ",
+        "target": "陽防",
+        "value": 2,
+        "condition": "攻撃式"
+      }
+    ]
+  },
+  {
+    "id": "58e21e98-c5b8-4a8b-b919-8f82b917e8e0",
+    "name": "ここで一枚",
+    "stats": {
+      "speed": 80,
+      "yinAttack": 100
+    },
+    "effects": [
+      {
+        "kind": "自身バフ",
+        "target": "速力",
+        "value": 3
+      },
+      {
+        "kind": "対象デバフ",
+        "target": "陽防",
+        "value": 3
+      },
+      {
+        "kind": "結界増加",
+        "target": "",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "id": "425d9881-1ffa-48e9-9aa6-18a5b23db4a6",
+    "name": "式神データマイニング",
+    "stats": {
+      "speed": 80,
+      "yangAttack": 100
+    },
+    "effects": [
+      {
+        "kind": "自身バフ",
+        "target": "陽攻",
+        "value": 3
+      },
+      {
+        "kind": "対象デバフ",
+        "target": "回避",
+        "value": 3
+      },
+      {
+        "kind": "霊力上昇",
+        "target": "",
+        "value": 1
+      }
+    ]
   }
 ]

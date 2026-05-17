@@ -24,7 +24,8 @@ export type BulletKind =
   | '斬撃弾'
   | '流体弾'
   | '御札弾'
-  | 'ミサイル弾';
+  | 'ミサイル弾'
+  | '肉弾';
 
 export type ElementalAdvantage = '有利' | '等倍' | '不利';
 
@@ -630,6 +631,7 @@ export const ALL_BULLET_KINDS: BulletKind[] = [
   '流体弾',
   '御札弾',
   'ミサイル弾',
+  '肉弾',
 ];
 
 export const ALL_ELEMENTAL_ADVANTAGES: ElementalAdvantage[] = [

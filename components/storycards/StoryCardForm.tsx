@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import type {
   StoryCard,
   StoryCardEffect,
@@ -19,10 +19,23 @@ const ALL_KINDS: StoryCardEffectKind[] = [
 ];
 
 const ALL_CLASSES: CharacterClass[] = [
-  '攻撃式', '防御式', '速攻式', '支援式', '妨害式', '回復式', '破壊式', '技巧式',
+  '攻撃式',
+  '防御式',
+  '速攻式',
+  '支援式',
+  '妨害式',
+  '回復式',
+  '破壊式',
+  '技巧式',
 ];
 
-const STAT_KEYS = ['yangAttack', 'yinAttack', 'speed', 'yangDefense', 'yinDefense'] as const;
+const STAT_KEYS = [
+  'yangAttack',
+  'yinAttack',
+  'speed',
+  'yangDefense',
+  'yinDefense',
+] as const;
 type StatKey = (typeof STAT_KEYS)[number];
 
 const STAT_LABELS: Record<StatKey, string> = {
@@ -34,13 +47,37 @@ const STAT_LABELS: Record<StatKey, string> = {
 };
 
 const TARGET_OPTIONS: Partial<Record<StoryCardEffectKind, string[]>> = {
-  自身バフ: ['陽攻', '陰攻', '速力', '陽防', '陰防', '命中', 'CRI攻撃', 'CRI命中'],
-  対象デバフ: ['陽防', '陰防', 'CRI防御', 'CRI回避'],
-  属性ダメージUP: ['無', '火', '水', '木', '金', '土', '日', '月', '星', '天'],
-  弾種ダメージUP: ['通常弾', 'レーザー弾', '肉弾', '符弾', '斬撃弾', '貫通弾'],
+  自身バフ: [
+    '陽攻',
+    '陰攻',
+    '速力',
+    '陽防',
+    '陰防',
+    '命中',
+    'CRI攻撃',
+    'CRI命中',
+  ],
+  対象デバフ: ['陽防', '陰防', 'CRI防御', 'CRI回避', '回避'],
+  属性ダメージUP: ['無', '火', '水', '木', '金', '土', '日', '月', '星'],
+  弾種ダメージUP: [
+    '光弾',
+    'レーザー弾',
+    'エネルギー弾',
+    '質量弾',
+    '通常弾',
+    '斬撃弾',
+    '流体弾',
+    '御札弾',
+    'ミサイル弾',
+    '肉弾',
+  ],
 };
 
-const NO_TARGET_KINDS: StoryCardEffectKind[] = ['霊力上昇', '結界増加', 'ダメージ軽減'];
+const NO_TARGET_KINDS: StoryCardEffectKind[] = [
+  '霊力上昇',
+  '結界増加',
+  'ダメージ軽減',
+];
 
 const MAX_STATS = 2;
 const MAX_EFFECTS = 3;
@@ -71,6 +108,117 @@ function emptyEffect(): StoryCardEffect {
   return { kind: '自身バフ', target: '陽攻', value: 1 };
 }
 
+// 効果行を独立コンポーネントに分離することで option の key スコープを分離する
+function EffectRow({
+  eff,
+  canRemove,
+  onUpdate,
+  onRemove,
+}: {
+  eff: StoryCardEffect;
+  canRemove: boolean;
+  onUpdate: (patch: Partial<StoryCardEffect>) => void;
+  onRemove: () => void;
+}) {
+  const uid = useId();
+  const opts = TARGET_OPTIONS[eff.kind];
+  const noTarget = NO_TARGET_KINDS.includes(eff.kind);
+  const noCondition =
+    eff.kind === '属性ダメージUP' || eff.kind === '弾種ダメージUP';
+
+  const handleKindChange = (kind: StoryCardEffectKind) => {
+    const nextOpts = TARGET_OPTIONS[kind];
+    const target = nextOpts
+      ? nextOpts[0]
+      : NO_TARGET_KINDS.includes(kind)
+        ? ''
+        : '';
+    onUpdate({ kind, target });
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <select
+        value={eff.kind}
+        onChange={(e) =>
+          handleKindChange(e.target.value as StoryCardEffectKind)
+        }
+        className={selectCls}
+      >
+        {ALL_KINDS.map((k) => (
+          <option key={`${uid}-kind-${k}`} value={k}>
+            {k}
+          </option>
+        ))}
+      </select>
+
+      {!noTarget &&
+        (opts ? (
+          <select
+            value={eff.target}
+            onChange={(e) => onUpdate({ target: e.target.value })}
+            className={selectCls}
+          >
+            {opts.map((t) => (
+              <option key={`${uid}-target-${t}`} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type="text"
+            value={eff.target}
+            onChange={(e) => onUpdate({ target: e.target.value })}
+            placeholder="対象"
+            className={`${inputCls} w-16`}
+          />
+        ))}
+
+      <input
+        type="number"
+        min={1}
+        value={eff.value}
+        onChange={(e) =>
+          onUpdate({ value: Math.max(1, Number(e.target.value)) })
+        }
+        className={`${inputCls} w-14 text-right`}
+      />
+
+      {!noCondition && (
+        <select
+          value={eff.condition ?? ''}
+          onChange={(e) =>
+            onUpdate({
+              condition: e.target.value
+                ? (e.target.value as CharacterClass)
+                : undefined,
+            })
+          }
+          className={selectCls}
+        >
+          <option value="">全式</option>
+          {ALL_CLASSES.map((c) => (
+            <option key={`${uid}-cond-${c}`} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {canRemove && (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="text-red-400 hover:text-red-600 text-xs px-1"
+        >
+          ✕
+        </button>
+      )}
+    </div>
+  );
+}
+
 interface Props {
   initial?: StoryCard;
   onSave: (card: StoryCard) => void;
@@ -79,7 +227,9 @@ interface Props {
 
 export default function StoryCardForm({ initial, onSave, onCancel }: Props) {
   const [name, setName] = useState(initial?.name ?? '');
-  const [statEntries, setStatEntries] = useState<[StatEntry, StatEntry]>(() => initialStats(initial));
+  const [statEntries, setStatEntries] = useState<[StatEntry, StatEntry]>(() =>
+    initialStats(initial),
+  );
   const [effects, setEffects] = useState<StoryCardEffect[]>(
     initial?.effects?.length ? initial.effects : [emptyEffect()],
   );
@@ -142,7 +292,9 @@ export default function StoryCardForm({ initial, onSave, onCancel }: Props) {
 
       {/* 名前 */}
       <div className="flex items-center gap-2">
-        <label className="w-10 text-right text-xs text-gray-500 shrink-0">名前</label>
+        <label className="w-10 text-right text-xs text-gray-500 shrink-0">
+          名前
+        </label>
         <input
           type="text"
           value={name}
@@ -154,16 +306,24 @@ export default function StoryCardForm({ initial, onSave, onCancel }: Props) {
 
       {/* ステータス補正 (2枠固定) */}
       <div className="space-y-1.5">
-        <p className="text-[10px] text-gray-400 uppercase tracking-wider">ステータス補正</p>
+        <p className="text-[10px] text-gray-400 uppercase tracking-wider">
+          ステータス補正
+        </p>
         {([0, 1] as const).map((i) => (
           <div key={i} className="flex items-center gap-1.5">
             <select
               value={statEntries[i].key}
-              onChange={(e) => updateStat(i, { key: e.target.value as StatKey })}
+              onChange={(e) =>
+                updateStat(i, { key: e.target.value as StatKey })
+              }
               className={selectCls}
             >
               {STAT_KEYS.map((k) => (
-                <option key={k} value={k} disabled={usedStatKeys.has(k) && k !== statEntries[i].key}>
+                <option
+                  key={k}
+                  value={k}
+                  disabled={usedStatKeys.has(k) && k !== statEntries[i].key}
+                >
                   {STAT_LABELS[k]}
                 </option>
               ))}
@@ -186,77 +346,15 @@ export default function StoryCardForm({ initial, onSave, onCancel }: Props) {
         <p className="text-[10px] text-gray-400 uppercase tracking-wider">
           効果 ({effects.length}/{MAX_EFFECTS})
         </p>
-        {effects.map((eff, i) => {
-          const opts = TARGET_OPTIONS[eff.kind];
-          const noTarget = NO_TARGET_KINDS.includes(eff.kind);
-          return (
-            <div key={i} className="flex flex-wrap items-center gap-1.5">
-              <select
-                value={eff.kind}
-                onChange={(e) => updateEffect(i, { kind: e.target.value as StoryCardEffectKind })}
-                className={selectCls}
-              >
-                {ALL_KINDS.map((k) => (
-                  <option key={k} value={k}>{k}</option>
-                ))}
-              </select>
-
-              {!noTarget && (
-                opts ? (
-                  <select
-                    value={eff.target}
-                    onChange={(e) => updateEffect(i, { target: e.target.value })}
-                    className={selectCls}
-                  >
-                    {opts.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    type="text"
-                    value={eff.target}
-                    onChange={(e) => updateEffect(i, { target: e.target.value })}
-                    placeholder="対象"
-                    className={`${inputCls} w-16`}
-                  />
-                )
-              )}
-
-              <input
-                type="number"
-                value={eff.value}
-                onChange={(e) => updateEffect(i, { value: Number(e.target.value) })}
-                className={`${inputCls} w-14 text-right`}
-              />
-
-              <select
-                value={eff.condition ?? ''}
-                onChange={(e) =>
-                  updateEffect(i, {
-                    condition: e.target.value ? (e.target.value as CharacterClass) : undefined,
-                  })
-                }
-                className={selectCls}
-              >
-                <option value="">全式</option>
-                {ALL_CLASSES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-
-              {canRemoveEffect && (
-                <button
-                  type="button"
-                  onClick={() => removeEffect(i)}
-                  className="text-red-400 hover:text-red-600 text-xs px-1"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          );
-        })}
+        {effects.map((eff, i) => (
+          <EffectRow
+            key={i}
+            eff={eff}
+            canRemove={canRemoveEffect}
+            onUpdate={(patch) => updateEffect(i, patch)}
+            onRemove={() => removeEffect(i)}
+          />
+        ))}
         {effects.length < MAX_EFFECTS && (
           <button
             type="button"

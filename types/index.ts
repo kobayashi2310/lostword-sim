@@ -417,6 +417,9 @@ export interface DamageBonus {
   accumulationEffects: AccumulationEffect[];
   resonanceEffects: ResonanceEffect[];
   greatBarrier?: GreatBarrierConfig | null;
+  // 永続デバフ（陽防・陰防のみ）: R1と合算し、-10超で減衰。FB中も有効。
+  persistentEnemyYangDefDebuff?: number; // 0 以下の整数
+  persistentEnemyYinDefDebuff?: number;
 }
 
 export type ResonanceKind =
@@ -489,6 +492,8 @@ export function createDefaultDamageBonus(): DamageBonus {
     accumulationEffects: [],
     resonanceEffects: [],
     greatBarrier: null,
+    persistentEnemyYangDefDebuff: 0,
+    persistentEnemyYinDefDebuff: 0,
   };
 }
 

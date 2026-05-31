@@ -277,20 +277,13 @@ function runHitOrderSimulation(config: SimulationConfig): {
 
       // 1. ブレイク判定 (ダメージ計算前)
       const breakTargetAilment = getBreakTargetAilment(bullet.effects);
-      let brokenThisBullet = 0;
 
       // 1-a. ブレイク弾による複数枚ブレイク
       if (enemyStats.hasBarriers && !isFullBreak && breakTargetAilment) {
-        // 対象の異常がある結界を特定
-        const newBarriers: BarrierStatus[] = [];
-        for (const b of currentEnemyBarriers) {
-          if (b.ailment === breakTargetAilment) {
-            brokenThisBullet++;
-          } else {
-            newBarriers.push(b);
-          }
-        }
-        currentEnemyBarriers = newBarriers;
+        // 対象の異常がある結界を取り除く
+        currentEnemyBarriers = currentEnemyBarriers.filter(
+          (b) => b.ailment !== breakTargetAilment,
+        );
       }
 
       // 1-b. 属性有利によるブレイク (1バレットにつき最大1枚)

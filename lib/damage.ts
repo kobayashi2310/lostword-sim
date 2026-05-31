@@ -25,6 +25,7 @@ import {
   getEffectiveHitRate,
   getAbilityBuffBonus,
   clampR1,
+  getPersistentCombinedDefMult,
 } from './buffs';
 import {
   calculateEffectiveStatMult,
@@ -36,21 +37,31 @@ import {
 // 大結界ヘルパー
 // ============================================================
 
-function calcGbSelfMult(entries: GreatBarrierEntry[], stat: GreatBarrierStatType): number {
+function calcGbSelfMult(
+  entries: GreatBarrierEntry[],
+  stat: GreatBarrierStatType,
+): number {
   return entries
     .filter((e) => e.stat === stat)
     .reduce(
-      (m, e) => m * (e.selfDir === 'UP' ? 1 + e.selfValue / 100 : 1 - e.selfValue / 100),
+      (m, e) =>
+        m *
+        (e.selfDir === 'UP' ? 1 + e.selfValue / 100 : 1 - e.selfValue / 100),
       1,
     );
 }
 
 // 物理防御系 (陽防/陰防) の敵側: DOWN → 敵防御 × (1 − n/100)
-function calcGbEnemyDefMult(entries: GreatBarrierEntry[], stat: GreatBarrierStatType): number {
+function calcGbEnemyDefMult(
+  entries: GreatBarrierEntry[],
+  stat: GreatBarrierStatType,
+): number {
   return entries
     .filter((e) => e.stat === stat)
     .reduce(
-      (m, e) => m * (e.selfDir === 'UP' ? 1 - e.enemyValue / 100 : 1 + e.enemyValue / 100),
+      (m, e) =>
+        m *
+        (e.selfDir === 'UP' ? 1 - e.enemyValue / 100 : 1 + e.enemyValue / 100),
       1,
     );
 }
@@ -60,7 +71,9 @@ function calcGbCriEnemyMult(entries: GreatBarrierEntry[]): number {
   return entries
     .filter((e) => e.stat === 'CRI攻撃/CRI防御')
     .reduce(
-      (m, e) => m * (e.selfDir === 'UP' ? 1 + e.enemyValue / 100 : 1 - e.enemyValue / 100),
+      (m, e) =>
+        m *
+        (e.selfDir === 'UP' ? 1 + e.enemyValue / 100 : 1 - e.enemyValue / 100),
       1,
     );
 }
@@ -147,9 +160,13 @@ export function calcAttackPower(
 
   // 大結界補正 (別枠乗算)
   const gb = damageBonus.greatBarrier;
-  const gbAtkMult = gb ? calcGbSelfMult(gb.entries, isYang ? '陽攻' : '陰攻') : 1;
+  const gbAtkMult = gb
+    ? calcGbSelfMult(gb.entries, isYang ? '陽攻' : '陰攻')
+    : 1;
   const gbSpdMult = gb ? calcGbSelfMult(gb.entries, '速力') : 1;
-  const gbDefMult = gb ? calcGbSelfMult(gb.entries, isYang ? '陽防' : '陰防') : 1;
+  const gbDefMult = gb
+    ? calcGbSelfMult(gb.entries, isYang ? '陽防' : '陰防')
+    : 1;
 
   // 共鳴補正 (速力のみ別枠乗算あり)
   const speedResonanceBonus = (damageBonus.resonanceEffects || [])
@@ -161,7 +178,9 @@ export function calcAttackPower(
     bullet.slashPercent > 0 ? effectiveSpeed * (bullet.slashPercent / 100) : 0;
 
   const hardComponent =
-    bullet.hardPercent > 0 ? selfDefense * gbDefMult * (bullet.hardPercent / 100) : 0;
+    bullet.hardPercent > 0
+      ? selfDefense * gbDefMult * (bullet.hardPercent / 100)
+      : 0;
 
   return attackPower * gbAtkMult + slashComponent + hardComponent;
 }
@@ -193,34 +212,57 @@ export function calcEnemyDefense(
   // 2. Rankバフ・デバフ・異常補正
   let totalRankAilmentMult = 1.0;
 
+  // 永続デバフ段階（貫通弾は Rank 補正を無視するため除外）
+  const persistentStages = !bullet.isPenetration
+    ? isYang
+      ? (damageBonus?.persistentEnemyYangDefDebuff ?? 0)
+      : (damageBonus?.persistentEnemyYinDefDebuff ?? 0)
+    : 0;
+
   if (bullet.isPenetration) {
-    // 貫通弾: Rank補正を無視し、異常デバフのみ適用
+    // 貫通弾: Rank補正（永続デバフ含む）を無視し、異常デバフのみ適用
     const isNullified = isAilmentNullified(
       enemyStats.ability,
       isYang ? '毒霧' : '燃焼',
     );
     const ailmentCount = isYang ? enemyAilments.毒霧 : enemyAilments.燃焼;
     totalRankAilmentMult = isNullified ? 1.0 : Math.pow(0.875, ailmentCount);
-  } else {
-    // 通常弾: すべて適用
+  } else if (!isFullBreak) {
+    // 通常弾・非FB: R1+永続デバフ合算（減衰ルール付き）× R2 × 異常
     const abilityBonus = getAbilityBuffBonus(enemyAilments, enemyStats.ability);
-    const { multiplier } = calculateEffectiveStatMult(
-      0, // ベース値は後で掛けるため0
-      isYang ? buffs.enemyYangDefR1 : buffs.enemyYinDefR1,
-      isYang ? buffs.enemyYangDefR2 : buffs.enemyYinDefR2,
-      isYang ? enemyAilments.毒霧 : enemyAilments.燃焼,
-      isAilmentNullified(enemyStats.ability, isYang ? '毒霧' : '燃焼'),
-      abilityBonus['陽防・陰防・CRI防御・CRI回避'],
-      0,
+    const baseR1 = isYang ? buffs.enemyYangDefR1 : buffs.enemyYinDefR1;
+    const baseR2 = isYang ? buffs.enemyYangDefR2 : buffs.enemyYinDefR2;
+    const r1WithAbility = clampR1(
+      baseR1 + abilityBonus['陽防・陰防・CRI防御・CRI回避'],
     );
-    totalRankAilmentMult = isFullBreak ? 1.0 : multiplier;
+    const r1Mult = getPersistentCombinedDefMult(
+      r1WithAbility,
+      persistentStages,
+    );
+    const r2Mult = getAtkDefSpdMultiplier(baseR2);
+    const isNullified = isAilmentNullified(
+      enemyStats.ability,
+      isYang ? '毒霧' : '燃焼',
+    );
+    const ailmentCount = isYang ? enemyAilments.毒霧 : enemyAilments.燃焼;
+    const ailmentMult = isNullified ? 1.0 : Math.pow(0.875, ailmentCount);
+    totalRankAilmentMult = r1Mult * r2Mult * ailmentMult;
   }
+  // 通常弾・FB中: totalRankAilmentMult は 1.0 のまま（R1/R2リセット）
+
+  // 永続デバフのFB中効果（通常弾のみ・FB補正 ÷4 とは別枠乗算）
+  const persistentFbMult =
+    isFullBreak && !bullet.isPenetration && persistentStages < 0
+      ? getAtkDefSpdMultiplier(persistentStages)
+      : 1.0;
 
   // 3. 大結界補正 (別枠乗算・FB中も有効)
   const gb = damageBonus?.greatBarrier;
-  const gbMult = gb ? calcGbEnemyDefMult(gb.entries, isYang ? '陽防' : '陰防') : 1;
+  const gbMult = gb
+    ? calcGbEnemyDefMult(gb.entries, isYang ? '陽防' : '陰防')
+    : 1;
 
-  return baseDef * fbMult * totalRankAilmentMult * gbMult;
+  return baseDef * fbMult * totalRankAilmentMult * persistentFbMult * gbMult;
 }
 
 // ============================================================
@@ -325,7 +367,8 @@ export function calcSingleHitDamage(
     : bullet.power;
   const gbCriMult =
     isCrit && gb
-      ? calcGbSelfMult(gb.entries, 'CRI攻撃/CRI防御') * calcGbCriEnemyMult(gb.entries)
+      ? calcGbSelfMult(gb.entries, 'CRI攻撃/CRI防御') *
+        calcGbCriEnemyMult(gb.entries)
       : 1;
 
   return Math.floor(

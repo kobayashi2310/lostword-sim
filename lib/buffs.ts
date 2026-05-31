@@ -134,6 +134,22 @@ export function getAbilityBuffBonus(
   return bonuses;
 }
 
+/**
+ * 永続デバフ込みの防御R1倍率。
+ * r1WithAbility (能力補正済みのR1) と persistentStages を合算し、
+ * -10 以内なら通常式、-11 以下なら ÷(4.0 + 0.1×超過段数) の減衰式を適用。
+ */
+export function getPersistentCombinedDefMult(
+  r1WithAbility: number,
+  persistentStages: number,
+): number {
+  const combined = r1WithAbility + persistentStages;
+  if (combined >= -10) {
+    return getAtkDefSpdMultiplier(combined);
+  }
+  return 1 / (4.0 + 0.1 * (Math.abs(combined) - 10));
+}
+
 // ============================================================
 // バフ段階のクランプ
 // ============================================================

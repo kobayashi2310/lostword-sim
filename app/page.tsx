@@ -16,6 +16,7 @@ import BulletListForm from '@/components/bullets/BulletListForm';
 import HitOrderInput from '@/components/hitorder/HitOrderInput';
 import SimulationResults from '@/components/results/SimulationResults';
 import StoryCardSelector from '@/components/storycards/StoryCardSelector';
+import PersistentDebuffSection from '@/components/stats/PersistentDebuffSection';
 
 // Layout Components
 import Header from '@/components/layout/Header';
@@ -107,6 +108,25 @@ export default function Home() {
             <div>
               <h2 className={sectionTitle}>敵バフ/デバフ</h2>
               <EnemyBuffsPanel buffs={buffs} onChange={setBuffs} />
+            </div>
+            <hr className="border-gray-200 dark:border-gray-700" />
+            <div>
+              <PersistentDebuffSection
+                yangDef={damageBonus.persistentEnemyYangDefDebuff ?? 0}
+                yinDef={damageBonus.persistentEnemyYinDefDebuff ?? 0}
+                onYangDefChange={(v) =>
+                  setDamageBonus({
+                    ...damageBonus,
+                    persistentEnemyYangDefDebuff: v,
+                  })
+                }
+                onYinDefChange={(v) =>
+                  setDamageBonus({
+                    ...damageBonus,
+                    persistentEnemyYinDefDebuff: v,
+                  })
+                }
+              />
             </div>
           </div>
         );

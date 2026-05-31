@@ -175,6 +175,9 @@ export function applySelfBuff(
     case '自身命中上昇':
       next.selfHitR1 = clampR1(next.selfHitR1 + stages);
       break;
+    case '自身CRI攻撃上昇':
+      next.selfCriAttackR1 = clampR1(next.selfCriAttackR1 + stages);
+      break;
     case '自身CRI命中上昇':
       next.selfCriHitR1 = clampR1(next.selfCriHitR1 + stages);
       break;

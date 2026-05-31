@@ -156,7 +156,8 @@ for group in hitOrder:           // グループ = 同一ステップで発射�
 | 自身陽防上昇 | selfYangDefR1 | clampR1(+stages) |
 | 自身陰防上昇 | selfYinDefR1 | clampR1(+stages) |
 | 自身命中上昇 | hitRateR1 | clampHitCri(+stages) |
-| 自身CRI命中上昇 | criHitR1 | clampHitCri(+stages) |
+| 自身CRI攻撃上昇 | selfCriAttackR1 | clampR1(+stages) |
+| 自身CRI命中上昇 | selfCriHitR1 | clampR1(+stages) |
 | 対象陽防低下 | enemyYangDefR1 | clampR1(−stages) |
 | 対象陰防低下 | enemyYinDefR1 | clampR1(−stages) |
 | 対象CRI防御低下 | criAttackR1 | clampHitCri(+stages) |

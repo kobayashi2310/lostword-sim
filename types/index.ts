@@ -85,6 +85,7 @@ export type SelfBuffEffectType =
   | '自身陽防上昇'
   | '自身陰防上昇'
   | '自身命中上昇'
+  | '自身CRI攻撃上昇'
   | '自身CRI命中上昇';
 
 export type EnemyDebuffEffectType =
@@ -645,6 +646,7 @@ export const SELF_BUFF_EFFECT_TYPES: SelfBuffEffectType[] = [
   '自身陽防上昇',
   '自身陰防上昇',
   '自身命中上昇',
+  '自身CRI攻撃上昇',
   '自身CRI命中上昇',
 ];
 
